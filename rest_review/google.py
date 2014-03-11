@@ -10,6 +10,7 @@ import json
 import gzip
 from StringIO import StringIO
 import sqlite3
+import datetime
 
 db = sqlite3.connect(':memory:')
 db.text_factory = str
@@ -39,38 +40,45 @@ def main():
 		urls = re.findall(r'amp;u=http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+' , data)
 		urls = [ url.replace('amp;u=','') for url in urls]
 		urls = [ url.replace('&amp;','?') for url in urls]
-		print '\n'.join(urls)
+		# print '\n'.join(urls)
 	return urls
 
 def idExists(url):
 	cursor = db.cursor()
-	cursor.execute(""" select count(*) from toprestrunt where url = '"""+url +"""'""")
+	cursor.execute(""" select * from toprestrunt where url = '"""+url +"""'""")
 	row = cursor.fetchone()
+	print 'isExists:' + str(row)
 	if row:
+		print 'isExists'
 		return True
 	else:
+		print 'isNotExists'
 		return False
 
 def update(info):
-	curosr = db.curosr()
-	curosr.execute(""" update toprestrunt set score = ? where url = ? """, (info.score, info.url))
+	print 'update' + str(info)
+	cursor = db.cursor()
+	cursor.execute(""" update toprestrunt set score = ? where url = ? """, (info['score'], info['url']))
 	db.commit()
 
 def insert(info):
+	print 'insert' + str(info)
 	cursor = db.cursor()
 	print info
 	if idExists(info['url']):
-		# update(line)
-		print 'update(line)'
+		update(info)
 	else:
 		now = datetime.datetime.now()
 		try:
 			cursor.execute('''
 				INSERT INTO toprestrunt(url, title, score, ts)
-		    VALUES(?,?,?,?)''', (info.url, info.title, info.score, now)
+		    VALUES(?,?,?,?)''', (info['url'], info['title'], info['score'], now)
 		    )
+			db.commit()	
 		except ValueError as e:
+			print str(e)
 			pass
+	
 
 def parser(urls):
 	for url in urls:
@@ -102,8 +110,6 @@ def filter(url, content):
 	except:
 		pass
 
-
-	# print info
 	return info
 
 def get_info_from_url(url):
@@ -143,6 +149,7 @@ def create_table():
 
 
 def get():
+	print 'get()'
 	cursor = db.cursor()
 	cursor.execute(""" select * from toprestrunt """)
 	all_rows = cursor.fetchall()
