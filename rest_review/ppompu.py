@@ -4,9 +4,13 @@ import simplejson as json
 import os, sys, re
 import sqlite3
 import datetime
+import time
 
 db = sqlite3.connect('ppompu2.db')
 db.text_factory = str
+
+filters = ['iphone','5S', '아이폰', 'IPhone']
+
 
 def put():
 	for i in [1,2,3,4,5]:
@@ -58,7 +62,7 @@ def insert(line):
 	else:
 
 		date = str(line[4])
-		now = datetime.datetime.now()
+		now = time.time()
 
 		try:
 			cursor.execute('''
@@ -74,19 +78,25 @@ def update(id, title, writer, viewcnt, replycnt):
 	cursor = db.cursor()
 	# now = datetime.datetime.now()
 	try:
-		# print line
+		print id + "|" + title + "|" + writer + "|" + viewcnt + "|" + replycnt 
+		one = findById(id)
+		now = time.time()
+		# print now + ":" + one[6]
+		viewspeed = (int(viewcnt) - int(one[2]))/(float(now) - float(one[6]))*60
+		replyspeed = (int(replycnt) - int(one[3]))/(float(now) - float(one[6]))*60
+
+		print 'speed is ' + str(viewspeed) + ":" + str(replyspeed)
 		cursor.execute("""
-			update ppomput2 set 
-			viewspeed = (? - viewcnt)/(julianday(CURRENT_TIMESTAMP) - julianday(ts) * 86400.0) )
-			replyspeed = (? - replycnt)/(julianday(CURRENT_TIMESTAMP) - julianday(ts) * 86400.0) ) 
-			, viewcnt = ? , replycnt = ? where id = ? """, (int(viewcnt), int(replycnt), int(viewcnt), int(replycnt), int(id) )
+			update ppompu2 set 
+			viewspeed = ?
+			, replyspeed = ?
+			where id = ? """, (int(viewspeed), int(replyspeed), int(id) )
 			)
+		
 	except (IndexError, ValueError) as e:
 		# print 'lines is %s , %s , %s'%(viewcnt,replycnt,id) 
 		pass
 	
-
-
 def idExists(id):
 	cursor = db.cursor()
 	cursor.execute(""" select count(*) from ppompu2 where id = """+id)
@@ -111,13 +121,31 @@ def create_table():
 	''')
 	db.commit()
 
+def findById(id):
+	cursor = db.cursor()
+	cursor.execute(""" select id, title, viewcnt, replycnt, viewspeed, replyspeed, ts from ppompu2 where id = """+id)
+	row = cursor.fetchone()
+	print('{0} : {1} : {2} : {3} : {4} : {5} : {6}'.format(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+	return row
+
 
 def get():
 	cursor = db.cursor()
-	cursor.execute(""" select * from ppompu2 """)
+	cursor.execute(""" select id, title, viewcnt, replycnt, viewspeed, replyspeed from ppompu2 where replyspeed > 1""")
 	all_rows = cursor.fetchall()
 	for row in all_rows:
 		print('{0} : {1} : {2} : {3} : {4} : {5}'.format(row[0], row[1], row[2], row[3], row[4], row[5]))
+
+
+def findByFilter():
+	cursor = db.cursor()	
+	for f in filters:
+		cursor.execute(""" select id, title, viewcnt, replycnt, viewspeed, replyspeed from ppompu2 
+			where title like '%"""+f+"""%' """)
+		rows = cursor.fetchall()
+		for row in rows:
+			print('{0} : {1} : {2} : {3} : {4} : {5}'.format(row[0], row[1], row[2], row[3], row[4], row[5]))
+
 
 if __name__ == '__main__':
 	# drop_table()
@@ -125,3 +153,8 @@ if __name__ == '__main__':
 	put()
 	print '-----------------------'
 	get()
+	print '-----------------------'
+	findByFilter()
+
+
+
