@@ -1,0 +1,6 @@
+# cron:
+# - description: new daily summary job
+#   url: /tasks/durtka18handler
+#   schedule: every monday 21:00
+#   timezone: Asia/Seoul
+#   target: beta
