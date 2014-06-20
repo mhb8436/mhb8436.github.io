@@ -21,6 +21,7 @@ from google.appengine.api import taskqueue
 import jinja2
 import os
 from random import randint
+from google.appengine.api import memcache
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
@@ -630,9 +631,17 @@ class Durtka18PageHandler(webapp2.RequestHandler):
   
 class Ewdfosid71Page(webapp2.RequestHandler):
   def get(self):
-    ancestor_key = ndb.Key("MovieTitle", "TitleList")
-    self.response.headers['Content-Type'] = 'application/json'
-    self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
+    datas = memcache.get('%s:movietitle' % "TitleList")
+    if datas is not None:
+      self.response.out.write(datas)
+    else:
+      ancestor_key = ndb.Key("MovieTitle", "TitleList")
+      self.response.headers['Content-Type'] = 'application/json'
+      datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
+      if not memcache.add('%s:movietitle' % "TitleList", datas, 3600):
+        print 'Memcache set fail of MovieTitle'
+      self.response.out.write(datas)
+      
 
         
 app = webapp2.WSGIApplication([

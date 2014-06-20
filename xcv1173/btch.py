@@ -108,18 +108,18 @@ def addmoviefromfile():
 		content = f.readlines()
 		for c in content:
 			print c.strip()
-			url = 'http://xcv1173.appspot.com/ewdfosid93?q=' + urllib.quote(c.strip())
-			# url = 'http://localhost:8080/ewdfosid93?q=' + urllib.quote(c.strip())
+			# url = 'http://xcv1173.appspot.com/ewdfosid93?q=' + urllib.quote(c.strip())
+			url = 'http://localhost:8080/ewdfosid93?q=' + urllib.quote(c.strip())
 			result2 = urllib2.urlopen(url)
 
-	url = 'http://xcv1173.appspot.com/ewdfosid21'		
-	# url = 'http://localhost:8080/ewdfosid21'		
+	# url = 'http://xcv1173.appspot.com/ewdfosid21'		
+	url = 'http://localhost:8080/ewdfosid21'		
 	result2 = urllib2.urlopen(url)
 	print 'Finished...'
 
 if __name__ == '__main__':
-	# addmoviefromfile()
+	addmoviefromfile()
 	# updateRankBatch()
 	# print gRankUrl("오펀 블랙")
-	initialBatch()
+	# initialBatch()
 
