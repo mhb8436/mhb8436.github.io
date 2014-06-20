@@ -502,13 +502,6 @@ class Wfr4Page(webapp2.RequestHandler):
 #     ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
 #     self.response.out.write(json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()]))
 
-class Eftfsog34Page(webapp2.RequestHandler):
-  def get(self):
-    q = self.request.get('q')   
-    ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
-    self.response.headers['Content-Type'] = 'application/json'
-    self.response.out.write(json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()]))
-
 
 class PutNotice(webapp2.RequestHandler):
   def get(self):
@@ -632,16 +625,29 @@ class Durtka18PageHandler(webapp2.RequestHandler):
 class Ewdfosid71Page(webapp2.RequestHandler):
   def get(self):
     datas = memcache.get('%s:movietitle' % "TitleList")
+    self.response.headers['Content-Type'] = 'application/json'
     if datas is not None:
       self.response.out.write(datas)
     else:
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
-      self.response.headers['Content-Type'] = 'application/json'
       datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
       if not memcache.add('%s:movietitle' % "TitleList", datas, 3600):
         print 'Memcache set fail of MovieTitle'
       self.response.out.write(datas)
       
+class Eftfsog34Page(webapp2.RequestHandler):
+  def get(self):
+    q = self.request.get('q')   
+    self.response.headers['Content-Type'] = 'application/json'
+    datas = memcache.get('%s:movie' % q.encode('utf-8'))
+    if datas is not None:
+      self.response.out.write(datas)
+    else:
+      ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+      datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()])
+      if not memcache.add('%s:movie' % q.encode('utf-8'), datas, 3600):
+        print 'Memcache set fail of MovieTitle'
+        self.response.out.write()
 
         
 app = webapp2.WSGIApplication([
