@@ -624,14 +624,19 @@ class Durtka18PageHandler(webapp2.RequestHandler):
   
 class Ewdfosid71Page(webapp2.RequestHandler):
   def get(self):
-    datas = memcache.get('%s:movietitle' % "TitleList")
+    datas = memcache.get('%s_TitleList' % "movietitle")
     self.response.headers['Content-Type'] = 'application/json'
     if datas is not None:
       self.response.out.write(datas)
     else:
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
       datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
-      if not memcache.add('%s:movietitle' % "TitleList", datas, 3600):
+      kkk = 'TitleList'
+      if not memcache.set_multi({kkk:datas}, key_prefix='movietitle_', time=3600):
+        # memcache.set_multi({ "USA_98105": "raining",
+        #              "USA_94105": "foggy",
+        #              "USA_94043": "sunny" },
+        #              key_prefix="weather_", time=3600)
         print 'Memcache set fail of MovieTitle'
       self.response.out.write(datas)
       
@@ -639,15 +644,16 @@ class Eftfsog34Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')   
     self.response.headers['Content-Type'] = 'application/json'
-    datas = memcache.get('%s:movie' % q.encode('utf-8'))
+    datas = memcache.get('movie_%s' % q.encode('utf-8'))
     if datas is not None:
       self.response.out.write(datas)
     else:
       ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
       datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()])
-      if not memcache.add('%s:movie' % q.encode('utf-8'), datas, 3600):
+      kkk = q.encode('utf-8')
+      if not memcache.set_multi({kkk:datas}, key_prefix='movie_', time=3600):
         print 'Memcache set fail of MovieTitle'
-        self.response.out.write()
+        self.response.out.write(datas)
 
         
 app = webapp2.WSGIApplication([
