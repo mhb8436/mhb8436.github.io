@@ -102,6 +102,26 @@ def updateRankBatch():
 
 	print 'Finished..'
 
+def delAllMovieBatch():
+	print 'delAllMovieBatch begin'
+	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	# url = 'http://localhost:8080/ewdfosid71'
+	result = urllib2.urlopen(url)
+	lll = json.loads(result.read())
+	for i, o in enumerate(lll):
+		# if i > 2:
+		# 	return
+		# rnk = gRankUrl(o['name'].encode('utf-8'))
+		nm = o['name'].encode('utf-8')
+		# upurl = 'http://localhost:8080/ewdfosid67?q='+urllib.quote(nm)
+		upurl = 'http://xcv1173.appspot.com/ewdfosid67?q='+urllib.quote(nm)
+		result2 = urllib2.urlopen(upurl)
+		print o['name'].encode('utf-8') + '-->' + result2.read()
+		# time.sleep(randint(5,20))
+
+	print 'Finished..'
+
+
 def addmoviefromfile():
 	# result = urlfetch.fetch(url)
 	with open('mid.list2') as f:
@@ -118,8 +138,9 @@ def addmoviefromfile():
 	print 'Finished...'
 
 if __name__ == '__main__':
-	addmoviefromfile()
+	# addmoviefromfile() 
 	# updateRankBatch()
 	# print gRankUrl("오펀 블랙")
-	# initialBatch()
+	initialBatch()
+	# delAllMovieBatch()
 

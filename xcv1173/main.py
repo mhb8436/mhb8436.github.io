@@ -60,16 +60,7 @@ class MovieTitle(ndb.Model):
   @classmethod
   def query_movie(cls, ancestor_key):
     return cls.query(ancestor=ancestor_key).order(-cls.rank)
-# class Greeting(db.Model):
-#   """Models an individual Guestbook entry with an author, content, and date."""
-#   author = db.StringProperty()
-#   content = db.StringProperty(multiline=True, indexed=False)
-#   date = db.DateTimeProperty(auto_now_add=True)
 
-
-# def _GuestbookKey(guestbook_name=None):
-#   """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
-#   return db.Key.from_path('Guestbook', guestbook_name or 'default_guestbook')
 def read_videopage_url(url):
   #print 'read_videopage_url ' + url
 
@@ -303,8 +294,8 @@ def nhnUrl():
         name = re.sub(r'시즌', '', name.encode('utf-8','ignore'))
         name = re.sub(r'((\s)+(\d))*', '', name)
         mt = MovieTitle.query(MovieTitle.name==name).fetch(1)
-        rk = gRankUrl(name + ' 미드')
-        # rk = 0
+        # rk = gRankUrl(name + ' 미드')
+        rk = 0
         if rk is None:
           rk = 0
         if mt is None or len(mt) < 1:
@@ -316,54 +307,6 @@ def nhnUrl():
             )
           movie_title.put()   
 
-def gRankUrl(q):
-  q = q + ' 미드'
-  from google.appengine.api import urlfetch
-  url = 'https://www.google.com/search?q=' + urllib.quote(q)
-  result = urlfetch.fetch(url)
-  # print result.status_code
-  if result.status_code == 200:
-    content = result.content
-    # print result.content
-    dataus = re.search(r'"resultStats">About(\s)*[\d\,]*', content, re.M|re.I)
-    if dataus:
-      d1 = dataus.group()
-      d2 = re.findall(r'[(\d)\,]*', d1, re.M|re.I)
-      d3 = int(''.join(d2).replace(',',''))
-      # print d3
-      return d3
-      
-  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  # urllib2.install_opener(opener)
-  
-  # opener.addheaders = [
-  #    ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-  #   ,('accept-encoding','gzip,deflate,sdch')
-  #   ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-  #   ,('Cache-Control','max-age=0')
-  #   ,('Connection','keep-alive')
-  #   ,('Cookie','NNB=XUJD6C54DNDFE; npic=EXrsp7gmY44+BZsTrgtkrPUB04GxImrzgZ6Km6JasZMtzakgZW5qmnbIy02LuEDuCA==; page_uid=RHrDlspySDdssZSSWDZsss--325184; _naver_usersession_=U5rldnHAmVMAADKUql0; BMR=')
-  #   ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  # ]
-  # google_res = opener.open(url + '?q='+urllib.quote(q))
-  # #print google_res.info().get('Content-Encoding')
-  # if google_res.info().get('Content-Encoding') == 'gzip':
-  #   buf = StringIO( google_res.read() )
-  #   f = gzip.GzipFile(fileobj=buf)
-  #   content = f.read()
-
-  #   # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
-  #   dataus = re.search(r'<div id="resultStats">About(\s)*[\d\,]*', content, re.M|re.I)
-  #   if dataus:
-  #     d1 = dataus.group()
-  #     # #print d1
-  #     d2 = re.findall(r'[(\d)\,]*', d1, re.M|re.I)
-  #     # #print d2
-  #     # d3 = d2.group()
-  #     # #print ''.join(d2)
-  #     d3 = int(''.join(d2).replace(',',''))
-  #     # #print str(d3)
-  # return d3    
 
 def nhnImgUrl(q):
   q = q + ' 미드'
@@ -423,7 +366,7 @@ def new_fetch_movies(q):
 
   # print 'new fetch movies result is ' + str(len(result))
   for (i, r) in enumerate(result):    
-    #print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore')
+    print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore')
     item_s = []
     for i in r['items']:
       #print 'item->' + i['name'].encode('utf-8','ignore') 
@@ -443,28 +386,33 @@ def new_fetch_movies(q):
 
     print 'item length is ' + str(len(item_s))
     if len(item_s) > 0:
-      # already = Movie.query(Movie.name == r['name'].encode('utf-8','ignore')).fetch(1)
-      # print 'already is ' + str(len(already))
-      # if len(already) < 1:
-      movie = Movie(
-        parent=ndb.Key("Movie", q.encode('utf-8','ignore')),
-        name=r['name'].encode('utf-8','ignore'),
-        url=r['url'],
-        image=r['image'],
-        items=item_s
-        )
-      print 'movie->' + r['name'].encode('utf-8','ignore')   
-      movie.put()
-      
-      print movie
+      already = Movie.query(Movie.name == r['name'].encode('utf-8','ignore')).get()
+      print 'already is ' + str(already)
+      if already:
+        already.name = r['name'].encode('utf-8','ignore') 
+        url = r['url']
+        images = r['image']
+        items = item_s
+        already.put()
+      else:
+        movie = Movie(
+          parent=ndb.Key("Movie", q.encode('utf-8','ignore')),
+          name=r['name'].encode('utf-8','ignore'),
+          url=r['url'],
+          image=r['image'],
+          items=item_s
+          )
+        print 'movie->' + r['name'].encode('utf-8','ignore')   
+        movie.put()
+        print movie
 
-# def delete_movies(q):
-#   ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
-#   mm = Movie.query_movie(ancestor_key).fetch()
-#   for m in mm:
-#     if m:
-#       print ' delete rows is ' + str(m)
-#       print str(m.key.delete())
+def delete_movies(q):
+  ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+  mm = Movie.query_movie(ancestor_key).fetch()
+  for m in mm:
+    if m:
+      print ' delete rows is ' + str(m)
+      print str(m.key.delete())
 
 # class Werisdfls51Page(webapp2.RequestHandler):
 #   def get(self):
@@ -527,7 +475,8 @@ class Ewdfosid21Page(webapp2.RequestHandler):
     print m
     if len(m) < 1:
       img_url = nhnImgUrl(q.encode('utf-8'))
-      rank = gRankUrl(q.encode('utf-8'))
+      # rank = gRankUrl(q.encode('utf-8'))
+      rank = 0
       if img_url is None:
         img_url = ''
       movie_title = MovieTitle(
@@ -573,6 +522,20 @@ class Ewdfosid62Page(webapp2.RequestHandler):
     ancestor_key = ndb.Key("MovieTitle", "TitleList")
     self.response.headers['Content-Type'] = 'application/json'
     self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
+
+class Ewdfosid67Page(webapp2.RequestHandler):
+  def get(self):
+    q = self.request.get('q')
+    # mm = Movie.query(Movie.name == q.encode('utf-8')).fetch()
+    mm = Movie.query_movie(ndb.Key("Movie", q.encode('utf-8','ignore'))).fetch()
+    #print mm
+    if mm:
+      aaa = [ m.key.delete() for m in mm if m]
+      print aaa
+    # self.response.headers['Content-Type'] = 'application/json'
+    # pp = Movie.query(Movie.name == q.encode('utf-8')).get()
+    # if pp:
+    #   self.response.out.write(json.dumps([p.to_dict() for p in pp]))    
 
 class Ewdfosid93Page(webapp2.RequestHandler):
   def get(self):
@@ -626,9 +589,12 @@ class Ewdfosid71Page(webapp2.RequestHandler):
   def get(self):
     datas = memcache.get('%s_TitleList' % "movietitle")
     self.response.headers['Content-Type'] = 'application/json'
+
     if datas is not None:
+      print 'in memcache #####>' + str(datas)
       self.response.out.write(datas)
     else:
+      print 'in datastore #####>' + str(datas)
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
       datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
       kkk = 'TitleList'
@@ -644,23 +610,43 @@ class Eftfsog34Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')   
     self.response.headers['Content-Type'] = 'application/json'
-    datas = memcache.get('movie_%s' % q.encode('utf-8'))
+    datas = memcache.get('s_%s' % q.encode('utf-8'))
+    print 'in memcache #####>' + str(datas)
     if datas is not None:
       self.response.out.write(datas)
     else:
       ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
-      datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()])
+      datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch(projection=[Movie.name, Movie.image, Movie.url])])
+      print 'in ndb #####>' + str(len(datas))
       kkk = q.encode('utf-8')
-      if not memcache.set_multi({kkk:datas}, key_prefix='movie_', time=3600):
-        print 'Memcache set fail of MovieTitle'
+      if not memcache.set_multi({kkk:datas}, key_prefix='s_', time=3600):
+        print 'Memcache set fail of Season'
+        self.response.out.write(datas)
+
+class Eftfsog92Page(webapp2.RequestHandler):
+  def get(self):
+    q = self.request.get('q')   
+    self.response.headers['Content-Type'] = 'application/json'
+    datas = memcache.get('e_%s' % q.encode('utf-8'))
+    if datas is not None:
+      self.response.out.write(datas)
+    else:
+      # ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+      datas = json.dumps([p.to_dict() for p in Movie.query(Movie.name == q.encode('utf-8')).fetch()])
+      kkk = q.encode('utf-8')
+      if not memcache.set_multi({kkk:datas}, key_prefix='e_', time=3600):
+        print 'Memcache set fail of Episode'
         self.response.out.write(datas)
 
         
 app = webapp2.WSGIApplication([
     ('/wfr4', Wfr4Page),
     ('/eftfsog34', Eftfsog34Page),   # get Movie from url q 
+    ('/eftfsog92', Eftfsog92Page),   # get MovieItems from url q 
+
     ('/ewdfosid21', Ewdfosid21Page), # update image and ranking from MovieTiele
     ('/ewdfosid62', Ewdfosid62Page), # delete movie title from url q
+    ('/ewdfosid67', Ewdfosid67Page), # delete movie from url q
     ('/ewdfosid93', Ewdfosid93Page), # add movie title from url q
     
     ('/ewdfosid71', Ewdfosid71Page), # get movietitle
