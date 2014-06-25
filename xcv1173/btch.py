@@ -222,11 +222,32 @@ def addmoviefromfile():
 	result2 = urllib2.urlopen(url)
 	print 'Finished...'
 
+
+def makememcache():
+	print 'makememcache begin'
+	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	# url = 'http://localhost:8080/ewdfosid71'
+	# result = urlfetch.fetch(url)
+	result = urllib2.urlopen(url)
+	lll = json.loads(result.read())
+
+	# url = 'http://localhost:8080/tasks/durtka18handler'
+	# result = urllib2.urlopen(url)
+	for o in lll:
+		# if int(o['rank']) <= 1040000 and int(o['rank']) > 12000 :
+		url = 'http://xcv1173.appspot.com/eftfsog34?q=' + urllib.quote(o['name'].encode('utf-8'))
+		# url = 'http://localhost:8080/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+		print url
+		result2 = urllib2.urlopen(url)
+		print o['name'].encode('utf-8') + '-->' + result2.read()
+	print 'Finished..'
+
 if __name__ == '__main__':
 	# addmoviefromfile() 
 	# updateRankBatch()
 	# print gRankUrl("오펀 블랙")
 	# initialBatch()
 	# delAllMovieBatch()
-	updatetitlefromnhn()
+	# updatetitlefromnhn()
+	makememcache()
 
