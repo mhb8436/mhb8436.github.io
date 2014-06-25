@@ -598,7 +598,7 @@ class Ewdfosid71Page(webapp2.RequestHandler):
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
       datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
       kkk = 'TitleList'
-      if not memcache.set_multi({kkk:datas}, key_prefix='movietitle_', time=3600):
+      if not memcache.set_multi({kkk:datas}, key_prefix='movietitle_', time=3600*24):
         # memcache.set_multi({ "USA_98105": "raining",
         #              "USA_94105": "foggy",
         #              "USA_94043": "sunny" },
@@ -619,7 +619,7 @@ class Eftfsog34Page(webapp2.RequestHandler):
       datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch(projection=[Movie.name, Movie.image, Movie.url])])
       print 'in ndb #####>' + str(len(datas))
       kkk = q.encode('utf-8')
-      if not memcache.set_multi({kkk:datas}, key_prefix='s_', time=3600):
+      if not memcache.set_multi({kkk:datas}, key_prefix='s_', time=3600*24):
         print 'Memcache set fail of Season'
         self.response.out.write(datas)
 
@@ -634,7 +634,7 @@ class Eftfsog92Page(webapp2.RequestHandler):
       # ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
       datas = json.dumps([p.to_dict() for p in Movie.query(Movie.name == q.encode('utf-8')).fetch()])
       kkk = q.encode('utf-8')
-      if not memcache.set_multi({kkk:datas}, key_prefix='e_', time=3600):
+      if not memcache.set_multi({kkk:datas}, key_prefix='e_', time=3600*24):
         print 'Memcache set fail of Episode'
         self.response.out.write(datas)
 

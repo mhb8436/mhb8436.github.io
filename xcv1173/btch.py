@@ -14,6 +14,57 @@ import base64
 import codecs
 from random import randint
 
+def nhnUrl():
+  url = 'http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8'
+  opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+  urllib2.install_opener(opener)
+  rrrr = []
+  opener.addheaders = [
+     ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+    ,('accept-encoding','gzip,deflate,sdch')
+    ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
+    ,('Cache-Control','max-age=0')
+    ,('Connection','keep-alive')
+    ,('Cookie','NNB=XUJD6C54DNDFE; npic=EXrsp7gmY44+BZsTrgtkrPUB04GxImrzgZ6Km6JasZMtzakgZW5qmnbIy02LuEDuCA==; page_uid=RHrDlspySDdssZSSWDZsss--325184; _naver_usersession_=U5rldnHAmVMAADKUql0; BMR=')
+    ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
+  ]
+  google_res = opener.open(url)
+  # print google_res.info().get('Content-Encoding')
+  if google_res.info().get('Content-Encoding') == 'gzip':
+    buf = StringIO( google_res.read() )
+    f = gzip.GzipFile(fileobj=buf)
+    content = f.read()
+
+    # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+    dataus = re.search(r'var batchDataList=\[\{(.*)\;</script>', content, re.M|re.I)
+    # print dataus
+    if dataus:
+      d1 = dataus.group()
+      d2 = re.search(r'=\[(.*);', d1, re.M|re.I)
+      d3 = d2.group()
+      d3 = d3[1:len(d3)-1]
+
+      d3 = json.loads(d3);
+      # print d3
+      # now d3 is object 
+      for d in d3:
+        # print d
+#         (([시즌])+\d|)*
+# [(\s)(\d)*(\s)*]
+		istr = 'http://tv03.search.naver.net/nhnsvc?size=42x60&q=http://sstatic.naver.net/keypage/image/dss/'+d['posterImgUrl'] 
+		name = d['broadcastName']
+
+		name = re.sub(r'시즌', '', name.encode('utf-8','ignore'))
+		name = re.sub(r'((\s)+(\d))*', '', name)
+		# print name
+		rrrr.append(name)
+	
+      return rrrr
+        # nn = re.findall(r'([^시즌]\d)*',name, re.M|re.I)
+        # nstr = ''.join(nn)
+		# print d['broadcastName'].encode('utf-8','ignore') + '---' + name.encode('utf-8','ignore')
+
+
 def gRankUrl(q):
 	urls = ['https://www.google.co.kr/webhp?tab=ww&ei=K0eiU_GANtaMuASuloCYBQ&ved=0CBMQ1S4&gfe_rd=cr#newwindow=1&q=#q#','https://www.google.com/search?q=#q#', 'https://www.google.co.kr/search?q=#q#&gws_rd=ssl', 'https://www.google.co.kr/search?q=#q#']
 	q = '"' +q +'"' + ' "미국드라마"'
@@ -122,6 +173,40 @@ def delAllMovieBatch():
 	print 'Finished..'
 
 
+
+def updatetitlefromnhn():
+	print 'initialBatch begin'
+	
+	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	# url = 'http://localhost:8080/ewdfosid71'
+	# result = urlfetch.fetch(url)
+	result = urllib2.urlopen(url)
+	lll = json.loads(result.read())
+	titles = nhnUrl()
+	# url = 'http://localhost:8080/tasks/durtka18handler'
+	# result = urllib2.urlopen(url)
+	alreadylst = []
+	for o in lll:
+		# print o
+		for t in titles:
+			if t.replace(' ','') in o['name'].encode('utf-8').replace(' ',''):
+				# url = 'http://xcv1173.appspot.com/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+				# result2 = urllib2.urlopen(url)
+				# print o['name'].encode('utf-8') + '-->' + result2.read()		
+				print t
+				alreadylst.append(t)
+
+	for t in titles:
+		if t not in alreadylst:
+			url = 'http://localhost:8080/ewdfosid93?q=' + urllib.quote(t)
+			result2 = urllib2.urlopen(url)
+			if result2:
+				url = 'http://xcv1173.appspot.com/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+				result3 = urllib2.urlopen(url)
+				print t + '-->' + result3.read()		
+
+	print 'Finished..'
+
 def addmoviefromfile():
 	# result = urlfetch.fetch(url)
 	with open('mid.list2') as f:
@@ -141,6 +226,7 @@ if __name__ == '__main__':
 	# addmoviefromfile() 
 	# updateRankBatch()
 	# print gRankUrl("오펀 블랙")
-	initialBatch()
+	# initialBatch()
 	# delAllMovieBatch()
+	updatetitlefromnhn()
 

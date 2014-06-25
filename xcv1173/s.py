@@ -84,7 +84,7 @@ def nhnUrl(url):
   url = 'http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8'
   opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
   urllib2.install_opener(opener)
-  
+  rrrr = []
   opener.addheaders = [
      ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
     ,('accept-encoding','gzip,deflate,sdch')
@@ -122,8 +122,10 @@ def nhnUrl(url):
 
 		name = re.sub(r'시즌', '', name.encode('utf-8','ignore'))
 		name = re.sub(r'((\s)+(\d))*', '', name)
-		print name
-
+		# print name
+		rrrr.append(name)
+	
+      return rrrr
         # nn = re.findall(r'([^시즌]\d)*',name, re.M|re.I)
         # nstr = ''.join(nn)
 		# print d['broadcastName'].encode('utf-8','ignore') + '---' + name.encode('utf-8','ignore')
@@ -269,13 +271,28 @@ def checkInt(ddd):
 		print 'True'
 	else:
 		print 'False'
+
+
+def updatetitlefromnhn(titles):
+	print 'updatetitlefromnhn(titles)-- started!'
+	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	result = urllib2.urlopen(url)
+	aaa = result.read()
+	# print aaa
+	lll = json.loads(result.read())
+	for o in lll:
+		for t in titles:
+			if  t.replace(' ','') in o['name'].encode('utf-8').replace(' ',''):
+				print t
+
 if __name__ == '__main__':
 	e = 'ZZXEBTCGBofxkudjlcrt0q45gs291m8znw6viebp7hy3aBEGGPONIUYHV'
 	t = 'zHRb8D0qLyN7YXJ6zHBwtk84YhiaLyAq8xlbNhN98X72LyNb8kVwtQ=='
 	# print decodeUrl(e, t)
 	# result = nhnImgUrl()
 	# result = gRankUrl('https://www.google.co.kr/search?q=%EC%99%95%EC%A2%8C%EC%9D%98+%EA%B2%8C%EC%9E%84&oq=%EC%99%95%EC%A2%8C%EC%9D%98+%EA%B2%8C%EC%9E%84')
-	# result = nhnUrl('http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8')
+	result = nhnUrl('http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8')
+	updatetitlefromnhn(result)
 	# result = readUrl('http://searchpang.com/finder?q='+urllib.quote("왕좌의 게임")+'&search_tags%5B%5D='+urllib.quote("미드") )
 	# result = readUrl2('http://mentplus.com/m/v/2cxi58k' )
 	# for r in result:
@@ -287,7 +304,7 @@ if __name__ == '__main__':
 	# initialBatch()
 	# checkfromfile()
 	# addmoviefromfile()
-	checkInt('123')
+	# checkInt('123')
 
 
 	
