@@ -518,24 +518,18 @@ class Ewdfosid62Page(webapp2.RequestHandler):
     mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
     #print mm
     aaa = [ m.key.delete() for m in mm if m]
-    #print aaa
-    ancestor_key = ndb.Key("MovieTitle", "TitleList")
-    self.response.headers['Content-Type'] = 'application/json'
-    self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
+    print aaa
+    # ancestor_key = ndb.Key("MovieTitle", "TitleList")
+    # self.response.headers['Content-Type'] = 'application/json'
+    # self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
 
 class Ewdfosid67Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
-    # mm = Movie.query(Movie.name == q.encode('utf-8')).fetch()
     mm = Movie.query_movie(ndb.Key("Movie", q.encode('utf-8','ignore'))).fetch()
-    #print mm
     if mm:
       aaa = [ m.key.delete() for m in mm if m]
       print aaa
-    # self.response.headers['Content-Type'] = 'application/json'
-    # pp = Movie.query(Movie.name == q.encode('utf-8')).get()
-    # if pp:
-    #   self.response.out.write(json.dumps([p.to_dict() for p in pp]))    
 
 class Ewdfosid93Page(webapp2.RequestHandler):
   def get(self):

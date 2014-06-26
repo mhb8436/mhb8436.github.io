@@ -14,6 +14,9 @@ import base64
 import codecs
 from random import randint
 
+# _server_ = 'http://localhost:8080'
+_server_ = 'http://xcv1173.appspot.com/'
+
 def nhnUrl():
   url = 'http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8'
   opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
@@ -115,7 +118,7 @@ def gRankUrl(q):
 
 def initialBatch():
 	print 'initialBatch begin'
-	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	url = _server_+'/ewdfosid71'
 	# url = 'http://localhost:8080/ewdfosid71'
 	# result = urlfetch.fetch(url)
 	result = urllib2.urlopen(url)
@@ -125,7 +128,7 @@ def initialBatch():
 	# result = urllib2.urlopen(url)
 	for o in lll:
 		# if int(o['rank']) <= 1040000 and int(o['rank']) > 12000 :
-		url = 'http://xcv1173.appspot.com/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+		url = _server_+'/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
 		# url = 'http://localhost:8080/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
 		print url
 		result2 = urllib2.urlopen(url)
@@ -134,28 +137,30 @@ def initialBatch():
 		
 def updateRankBatch():
 	print 'updateRankBatch begin'
-	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	url = _server_+'/ewdfosid71'
 	# url = 'http://localhost:8080/ewdfosid71'
 	result = urllib2.urlopen(url)
 	lll = json.loads(result.read())
 	for i, o in enumerate(lll):
 		# if i > 2:
 		# 	return
-		rnk = gRankUrl(o['name'].encode('utf-8'))
-		nm = o['name'].encode('utf-8')
-		upurl = 'http://xcv1173.appspot.com/usoidsfjk12?nm='+urllib.quote(o['name'].encode('utf-8'))+'&rnk='+str(rnk)
-		# upurl = 'http://localhost:8080/usoidsfjk12?nm='+urllib.quote(o['name'].encode('utf-8'))+'&rnk='+str(rnk)
-		print upurl
-		# http://xcv1173.appspot.com/usoidsfjk12?nm=%EC%99%95%EC%A2%8C%EC%9D%98%20%EA%B2%8C%EC%9E%84&rnk=1000000
-		result2 = urllib2.urlopen(upurl)
-		print o['name'].encode('utf-8') + '-->' + result2.read()
-		time.sleep(randint(5,20))
+		print o['rank']
+		if o['rank'] == 0:
+			rnk = gRankUrl(o['name'].encode('utf-8'))
+			nm = o['name'].encode('utf-8')
+			upurl = _server_+'/usoidsfjk12?nm='+urllib.quote(o['name'].encode('utf-8'))+'&rnk='+str(rnk)
+			# upurl = 'http://localhost:8080/usoidsfjk12?nm='+urllib.quote(o['name'].encode('utf-8'))+'&rnk='+str(rnk)
+			print upurl
+			# http://xcv1173.appspot.com/usoidsfjk12?nm=%EC%99%95%EC%A2%8C%EC%9D%98%20%EA%B2%8C%EC%9E%84&rnk=1000000
+			result2 = urllib2.urlopen(upurl)
+			print o['name'].encode('utf-8') + '-->' + result2.read()
+			time.sleep(randint(20,80))
 
 	print 'Finished..'
 
 def delAllMovieBatch():
 	print 'delAllMovieBatch begin'
-	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	url = _server_+'/ewdfosid71'
 	# url = 'http://localhost:8080/ewdfosid71'
 	result = urllib2.urlopen(url)
 	lll = json.loads(result.read())
@@ -165,7 +170,26 @@ def delAllMovieBatch():
 		# rnk = gRankUrl(o['name'].encode('utf-8'))
 		nm = o['name'].encode('utf-8')
 		# upurl = 'http://localhost:8080/ewdfosid67?q='+urllib.quote(nm)
-		upurl = 'http://xcv1173.appspot.com/ewdfosid67?q='+urllib.quote(nm)
+		upurl = _server_+'/ewdfosid67?q='+urllib.quote(nm)
+		result2 = urllib2.urlopen(upurl)
+		print o['name'].encode('utf-8') + '-->' + result2.read()
+		# time.sleep(randint(5,20))
+
+	print 'Finished..'
+
+def delAllMovieTitleBatch():
+	print 'delAllMovieBatch begin'
+	url = _server_+'/ewdfosid71'
+	# url = 'http://localhost:8080/ewdfosid71'
+	result = urllib2.urlopen(url)
+	lll = json.loads(result.read())
+	for i, o in enumerate(lll):
+		# if i > 2:
+		# 	return
+		# rnk = gRankUrl(o['name'].encode('utf-8'))
+		nm = o['name'].encode('utf-8')
+		# upurl = 'http://localhost:8080/ewdfosid67?q='+urllib.quote(nm)
+		upurl = _server_+'/ewdfosid62?q='+urllib.quote(nm)
 		result2 = urllib2.urlopen(upurl)
 		print o['name'].encode('utf-8') + '-->' + result2.read()
 		# time.sleep(randint(5,20))
@@ -173,11 +197,10 @@ def delAllMovieBatch():
 	print 'Finished..'
 
 
-
 def updatetitlefromnhn():
-	print 'initialBatch begin'
+	print 'updatetitlefromnhn begin'
 	
-	url = 'http://xcv1173.appspot.com/ewdfosid71'
+	url = _server_+'/ewdfosid71'
 	# url = 'http://localhost:8080/ewdfosid71'
 	# result = urlfetch.fetch(url)
 	result = urllib2.urlopen(url)
@@ -190,20 +213,22 @@ def updatetitlefromnhn():
 		# print o
 		for t in titles:
 			if t.replace(' ','') in o['name'].encode('utf-8').replace(' ',''):
-				# url = 'http://xcv1173.appspot.com/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
-				# result2 = urllib2.urlopen(url)
-				# print o['name'].encode('utf-8') + '-->' + result2.read()		
-				print t
+				# print t
 				alreadylst.append(t)
+				# update on air program
+				print '[updated]: ' + o['name'].encode('utf-8')
+				url = _server_+'/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+				result2 = urllib2.urlopen(url)
 
+	print 'check exists and update'
 	for t in titles:
 		if t not in alreadylst:
-			url = 'http://localhost:8080/ewdfosid93?q=' + urllib.quote(t)
+			url = _server_+'/ewdfosid93?q=' + urllib.quote(t)
 			result2 = urllib2.urlopen(url)
-			if result2:
-				url = 'http://xcv1173.appspot.com/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
-				result3 = urllib2.urlopen(url)
-				print t + '-->' + result3.read()		
+
+			url = _server_+'/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+			result3 = urllib2.urlopen(url)
+			print t + '-->' + result3.read()		
 
 	print 'Finished..'
 
@@ -214,19 +239,20 @@ def addmoviefromfile():
 		for c in content:
 			print c.strip()
 			# url = 'http://xcv1173.appspot.com/ewdfosid93?q=' + urllib.quote(c.strip())
-			url = 'http://localhost:8080/ewdfosid93?q=' + urllib.quote(c.strip())
+			url = _server_+'/ewdfosid93?q=' + urllib.quote(c.strip())
 			result2 = urllib2.urlopen(url)
 
 	# url = 'http://xcv1173.appspot.com/ewdfosid21'		
-	url = 'http://localhost:8080/ewdfosid21'		
+	url = _server_+'/ewdfosid21'		
 	result2 = urllib2.urlopen(url)
+	# print result2
 	print 'Finished...'
 
 
 def makememcache():
 	print 'makememcache begin'
-	url = 'http://xcv1173.appspot.com/ewdfosid71'
-	# url = 'http://localhost:8080/ewdfosid71'
+	# url = 'http://xcv1173.appspot.com/ewdfosid71'
+	url = _server_ + '/ewdfosid71'
 	# result = urlfetch.fetch(url)
 	result = urllib2.urlopen(url)
 	lll = json.loads(result.read())
@@ -235,8 +261,9 @@ def makememcache():
 	# result = urllib2.urlopen(url)
 	for o in lll:
 		# if int(o['rank']) <= 1040000 and int(o['rank']) > 12000 :
-		url = 'http://xcv1173.appspot.com/eftfsog34?q=' + urllib.quote(o['name'].encode('utf-8'))
-		# url = 'http://localhost:8080/tasks/durtka18handler?q=' + urllib.quote(o['name'].encode('utf-8'))
+		# url = 'http://xcv1173.appspot.com/eftfsog34?q=' + urllib.quote(o['name'].encode('utf-8'))
+		url = _server_+'/eftfsog34?q=' + urllib.quote(o['name'].encode('utf-8'))
+		
 		print url
 		result2 = urllib2.urlopen(url)
 		print o['name'].encode('utf-8') + '-->' + result2.read()
@@ -244,10 +271,11 @@ def makememcache():
 
 if __name__ == '__main__':
 	# addmoviefromfile() 
-	# updateRankBatch()
-	# print gRankUrl("오펀 블랙")
+	# updatetitlefromnhn()
+	updateRankBatch()
+
 	# initialBatch()
 	# delAllMovieBatch()
-	# updatetitlefromnhn()
-	makememcache()
+	# delAllMovieTitleBatch()
+	# makememcache()
 
