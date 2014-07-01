@@ -14,8 +14,8 @@ import base64
 import codecs
 from random import randint
 
-# _server_ = 'http://localhost:8080'
-_server_ = 'http://xcv1173.appspot.com/'
+_server_ = 'http://localhost:8080'
+# _server_ = 'http://xcv1173.appspot.com/'
 
 def nhnUrl():
   url = 'http://m.search.naver.com/search.naver?where=nexearch&query=%EB%AF%B8%EA%B5%AD+%EB%93%9C%EB%9D%BC%EB%A7%88&sm=top_hty&fbm=1&ie=utf8'
@@ -270,9 +270,9 @@ def makememcache():
 	print 'Finished..'
 
 if __name__ == '__main__':
-	# addmoviefromfile() 
+	addmoviefromfile() 
 	# updatetitlefromnhn()
-	updateRankBatch()
+	# updateRankBatch()
 
 	# initialBatch()
 	# delAllMovieBatch()
