@@ -61,168 +61,185 @@ class MovieTitle(ndb.Model):
   def query_movie(cls, ancestor_key):
     return cls.query(ancestor=ancestor_key).order(-cls.rank)
 
+class KidsMovie(ndb.Model):
+  name = ndb.StringProperty(indexed=True)
+  playlist = ndb.StringProperty()
+  image = ndb.StringProperty()
+
+  @classmethod
+  def query_movie(cls, ancestor_key):
+    return cls.query(ancestor=ancestor_key).order(cls.name)
+
+
+
 def read_videopage_url(url):
-  #print 'read_videopage_url ' + url
+  ## print 'read_videopage_url ' + url
 
-  opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  urllib2.install_opener(opener)
-  opener.addheaders = [
-     ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-    ,('accept-encoding','gzip,deflate,sdch')
-    ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-    ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  ]
-  google_res = opener.open(url)
-  #print google_res.info().get('Content-Encoding')
-  if google_res.info().get('Content-Encoding') == 'gzip':
-    buf = StringIO( google_res.read() )
-    f = gzip.GzipFile(fileobj=buf)
-    content = f.read()
+  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+  # urllib2.install_opener(opener)
+  # opener.addheaders = [
+  #   #  ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+  #   # # ,('accept-encoding','gzip,deflate,sdch')
+  #   # ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
+  #   # ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
+  # ]
+  # google_res = opener.open(url)
+  google_res = urllib2.urlopen(url)
+  ## print google_res.info().get('Content-Encoding')
+  # if google_res.info().get('Content-Encoding') == 'gzip':
+  # buf = StringIO( google_res.read() )
+  # f = gzip.GzipFile(fileobj=buf)
+  content = google_res.read()
 
-    # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
-    dataus = re.findall(r'<div class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
-    # names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
-    # images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
-    b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
+  # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+  dataus = re.findall(r'<div class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+  # names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
+  # images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
+  b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
 
-    result = [] 
-    #print str(len(dataus))
-    if dataus:
-      for i, d in enumerate(dataus):
-        # #print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
-        try:
-          # nm= extcont(names[i])
-          # #print nm
-          result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])) })
-        except IndexError:
-          pass
+  result = [] 
+  ## print str(len(dataus))
+  if dataus:
+    for i, d in enumerate(dataus):
+      # ## print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
+      try:
+        # nm= extcont(names[i])
+        # ## print nm
+        result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])) })
+      except IndexError:
+        pass
 
     return result
 
 def read_listresult_url(q, url, cur_page, max_page):
-  #print 'read_listresult_url ' + url
-  print 'read_listresult_url(q, url, cur_page=1, max_page=1): ' + str(cur_page) + '==' + str(max_page)
+  ## print 'read_listresult_url ' + url
+  # # print 'read_listresult_url(q, url, cur_page=1, max_page=1): ' + str(cur_page) + '==' + str(max_page)
   if cur_page > max_page:
     return
   cur_page += 1
+  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+  # urllib2.install_opener(opener)
+  # opener.addheaders = [
+  #    ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+  #   ,('accept-encoding','gzip,deflate,sdch')
+  #   ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
+  #   ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
+  # ]
+  google_res = urllib2.urlopen(url)
+  # google_res = opener.open(url)
+  # print google_res.info().get('Content-Encoding')
+  # if google_res.info().get('Content-Encoding') == 'gzip':
+  # buf = StringIO( google_res.read() )
+  # f = gzip.GzipFile(fileobj=buf)
+  content = google_res.read()
   # content = f.read()
-  opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  urllib2.install_opener(opener)
-  opener.addheaders = [
-     ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-    ,('accept-encoding','gzip,deflate,sdch')
-    ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-    ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  ]
-  google_res = opener.open(url)
-  #print google_res.info().get('Content-Encoding')
-  if google_res.info().get('Content-Encoding') == 'gzip':
-    buf = StringIO( google_res.read() )
-    f = gzip.GzipFile(fileobj=buf)
-    content = f.read()
+  # print content
+  dataus = re.findall(r'<a class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+  names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
+  images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
+  b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
 
+  result = [] 
+  # print str(len(dataus)) + ':' + str(len(names)) + ':' + str(len(images))
+  if dataus and names and images:
+    for (i, d) in enumerate(dataus):
+      # # print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
+      try:
+        nm = extcont(names[i])
 
-    dataus = re.findall(r'<a class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
-    names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
-    images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
-    b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
+        if nm:
+          nm = nm.decode('utf-8', 'ignore')
+          # if q in nm:
+          if q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''):
+            result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])), 'name':nm, 'image':extattr(images[i])  })
+      except IndexError as e:
+        print "IndexError error: {0}".format(str(e))
+      except AttributeError as e:
+        print "AttributeError error({0}): {1}".format(e.errno, e.strerror)
+        pass
+  # print '--------'      
+  # print result 
+  more_container = re.search(r'<ul class="pagination"><li class[\=\"\d\w\s\>\<\/\-\?]*<span',content, re.M|re.I)
+  if more_container:
+    ## print more_container.group()
+    more2 = re.search(r'<li class="first[\s\w]*"><a href="[\/\d\w\?\=]*"(.)*</li><li class="last', more_container.group(), re.M|re.I)
+    if more2:
+      more = re.findall(r'<a href="[\/\d\w\?\=]*"', more2.group(), re.M|re.I)
+      fix_url = re.search(r'<a href="[\/\d\w]*"', more_container.group(), re.M|re.I)
+      if max_page == 1:
+        max_page = len(more)
+      for i in more:          
+        moreurl = extmore(i)
+        http_url = re.search(r'http://[a-zA-Z\.]+\/', url, re.M|re.I)
+        if 'page=' in moreurl:
+          moreurl = re.sub(r'page=(\d)*','page='+str(cur_page), moreurl)
+          aurl = http_url.group() + moreurl
+        else:
+          aurl = http_url.group() + moreurl + '?page=' + str(cur_page)
 
-    result = [] 
-    #print str(len(dataus)) + ':' + str(len(names)) + ':' + str(len(images))
-    if dataus and names and images:
-      for (i, d) in enumerate(dataus):
-        # #print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
-        try:
-          nm = extcont(names[i])
-
-          if nm:
-            nm = nm.decode('utf-8', 'ignore')
-            # if q in nm:
-            if q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''):
-              result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])), 'name':nm, 'image':extattr(images[i])  })
-        except IndexError, AttributeError:
-          print 'error'
-          pass
-    print '--------'      
+        # print aurl
+        aaa = read_listresult_url(q, aurl, cur_page, max_page)
+        if aaa:
+          result += aaa
+        return result
+    print '--- return ----'      
     print result 
-    more_container = re.search(r'<ul class="pagination"><li class[\=\"\d\w\s\>\<\/\-\?]*<span',content, re.M|re.I)
-    if more_container:
-      #print more_container.group()
-      more2 = re.search(r'<li class="first[\s\w]*"><a href="[\/\d\w\?\=]*"(.)*</li><li class="last', more_container.group(), re.M|re.I)
-      if more2:
-        more = re.findall(r'<a href="[\/\d\w\?\=]*"', more2.group(), re.M|re.I)
-        fix_url = re.search(r'<a href="[\/\d\w]*"', more_container.group(), re.M|re.I)
-        if max_page == 1:
-          max_page = len(more)
-        for i in more:          
-          moreurl = extmore(i)
-          http_url = re.search(r'http://[a-zA-Z\.]+\/', url, re.M|re.I)
-          if 'page=' in moreurl:
-            moreurl = re.sub(r'page=(\d)*','page='+str(cur_page), moreurl)
-            aurl = http_url.group() + moreurl
-          else:
-            aurl = http_url.group() + moreurl + '?page=' + str(cur_page)
-
-          print aurl
-          aaa = read_listresult_url(q, aurl, cur_page, max_page)
-          if aaa:
-            result += aaa
-          return result
-            
     return result
 
 def read_searchresult_url(q, url):
-  #print 'read_searchresult_url ' + url
+  # print 'read_searchresult_url ' + url
 
+  # 
+  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+  # urllib2.install_opener(opener)
+  # opener.addheaders = [
+  #    ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+  #   ,('accept-encoding','gzip,deflate,sdch')
+  #   ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
+  #   ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
+  # ]
+  # google_res = opener.open(url)
+  google_res = urllib2.urlopen(url)
+  # print google_res.info().get('Content-Encoding')
+  # if google_res.info().get('Content-Encoding') == 'gzip':
+  # buf = StringIO( google_res.read() )
+  # f = gzip.GzipFile(fileobj=buf)
   # content = f.read()
-  opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  urllib2.install_opener(opener)
-  opener.addheaders = [
-     ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-    ,('accept-encoding','gzip,deflate,sdch')
-    ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-    ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  ]
-  google_res = opener.open(url)
-  #print google_res.info().get('Content-Encoding')
-  if google_res.info().get('Content-Encoding') == 'gzip':
-    buf = StringIO( google_res.read() )
-    f = gzip.GzipFile(fileobj=buf)
-    content = f.read()
-    contents = re.search(r'미드(.*)</h5>(.*)', content, re.M|re.I)
-    #print contents 
+  content = google_res.read()
+  contents = re.search(r'미드(.*)</h5>(.*)', content, re.M|re.I)
+  ## print contents 
 
-    more = re.search(r'href="/finder(.*)">영상 목록 검색 결과 더보기',content, re.M|re.I)
-    if contents: 
-      kcontent = contents.group()
+  more = re.search(r'href="/finder(.*)">영상 목록 검색 결과 더보기',content, re.M|re.I)
+  if contents: 
+    kcontent = contents.group()
 
-    dataus = re.findall(r'<a class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', kcontent, re.M|re.I)
-    names = re.findall(r'<span class="name">[^\<\>]*</span>',kcontent, re.M|re.I)
-    images = re.findall(r'<img src="http://[^\<]*',kcontent, re.M|re.I)
-    b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
+  dataus = re.findall(r'<a class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+  names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
+  images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
+  b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
 
-    result = [] 
-    #print str(len(dataus)) + ':' + str(len(names)) + ':' + str(len(images))
-    if dataus and names and images:
-      for i, d in enumerate(dataus):
-        # #print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
-        try:
-          nm = extcont(names[i])
-          if nm:
-            nm = nm.decode('utf-8', 'ignore')
-            print 'result---->' +  nm.encode('utf-8').replace(' ','')
-            print 'result---->' + q.encode('utf-8').replace(' ','')
-            if q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''):
-              print 'result---->' + str(q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''))
-              result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])), 'name':nm, 'image':extattr(images[i])  })
-        except IndexError:
-          pass
+  result = [] 
+  # print str(len(dataus)) + ':' + str(len(names)) + ':' + str(len(images))
+  if dataus and names and images:
+    for i, d in enumerate(dataus):
+      # ## print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
+      try:
+        nm = extcont(names[i])
+        if nm:
+          nm = nm.decode('utf-8', 'ignore')
+          # print 'result---->' +  nm.encode('utf-8').replace(' ','')
+          # print 'result---->' + q.encode('utf-8').replace(' ','')
+          if q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''):
+            # print 'result---->' + str(q.encode('utf-8').replace(' ','') in nm.encode('utf-8').replace(' ',''))
+            result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])), 'name':nm, 'image':extattr(images[i])  })
+      except IndexError:
+        pass
 
     if more:
       http_url = re.search(r'http://[a-zA-Z\.]+\/', url, re.M|re.I)
       moreurl = extmore(more.group())
-      result += read_searchresult_url(q, http_url.group() + moreurl)
-    print result
+      result = read_searchresult_url(q, http_url.group() + '/' + moreurl)
+    # print result
     return result
 
 def extattr(str):
@@ -267,8 +284,8 @@ def nhnUrl():
     ,('Cookie','NNB=XUJD6C54DNDFE; npic=EXrsp7gmY44+BZsTrgtkrPUB04GxImrzgZ6Km6JasZMtzakgZW5qmnbIy02LuEDuCA==; page_uid=RHrDlspySDdssZSSWDZsss--325184; _naver_usersession_=U5rldnHAmVMAADKUql0; BMR=')
     ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
   ]
-  google_res = opener.open(url)
-  # #print google_res.info().get('Content-Encoding')
+  # google_res = opener.open(url)
+  # ## print google_res.info().get('Content-Encoding')
   if google_res.info().get('Content-Encoding') == 'gzip':
     buf = StringIO( google_res.read() )
     f = gzip.GzipFile(fileobj=buf)
@@ -276,7 +293,7 @@ def nhnUrl():
 
     # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
     dataus = re.search(r'var batchDataList=\[\{(.*)\;</script>', content, re.M|re.I)
-    # #print dataus
+    # ## print dataus
     if dataus:
       d1 = dataus.group()
       d2 = re.search(r'=\[(.*);', d1, re.M|re.I)
@@ -284,10 +301,10 @@ def nhnUrl():
       d3 = d3[1:len(d3)-1]
 
       d3 = json.loads(d3);
-      # #print d3
+      # ## print d3
       # now d3 is object 
       for d in d3:
-        # #print d
+        # ## print d
         istr = 'http://tv03.search.naver.net/nhnsvc?size=42x60&q=http://sstatic.naver.net/keypage/image/dss/'+d['posterImgUrl'] 
         name = d['broadcastName']
 
@@ -324,7 +341,7 @@ def nhnImgUrl(q):
     ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
   ]
   google_res = opener.open(url)
-  #print google_res.info().get('Content-Encoding')
+  ## print google_res.info().get('Content-Encoding')
   if google_res.info().get('Content-Encoding') == 'gzip':
     buf = StringIO( google_res.read() )
     f = gzip.GzipFile(fileobj=buf)
@@ -342,52 +359,57 @@ def nhnImgUrl(q):
 
 
 def new_fetch_movies(q):
-  #print 'begin new_fetch_movies ... '
-  #print q.encode('utf-8')
-  result = read_searchresult_url(q, 'http://searchpang.com/finder?q='+urllib.quote(q.encode('utf-8'))+'&search_tags%5B%5D='+urllib.quote("미드") )
-  #print result
+  print 'begin new_fetch_movies ... '
+  print q.encode('utf-8')
+  result = read_searchresult_url(q, 'http://searchpang.com/finder?q='+urllib.quote(q.encode('utf-8'))+'&search_tags%5B%5D='+urllib.quote("미드") +'&category=list')
+  # print result
   isMovie = True
   for r in result: # movie items
+    print 'new_fetch_movies url is '  + r['url']
     r['items'] = read_listresult_url(q, r['url'], 1, 1)
-    for s in r['items']: # item player  
-      isMovie = False
-      p = read_videopage_url(s['url']) # player url
-      #print str(s['url']) + '===' + str(p)
-      if p and len(p):
-        s['embed'] = p[0]['url']
-      else:
-        s['embed'] = ''
+    if r is not None and r['items'] is not None:
+      for s in r['items']: # item player  
+        isMovie = False
+        p = read_videopage_url(s['url']) # player url
+        ## print str(s['url']) + '===' + str(p)
+        if p and len(p):
+          s['embed'] = p[0]['url']
+        else:
+          s['embed'] = ''
   
-  if isMovie:
-    mt = MovieTitle.query(MovieTitle.name==q.encode('utf-8')).fetch()
-    for m in mt:
-      print str(m.key.delete())
+  try:
+    if isMovie:
+      mt = MovieTitle.query(MovieTitle.name==q.encode('utf-8')).fetch()
+      for m in mt:
+        m.key.delete()
+  except UnicodeDecodeError:
+    pass
 
-
-  # print 'new fetch movies result is ' + str(len(result))
-  for (i, r) in enumerate(result):    
-    print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore')
+  # print 'new fetch movies result is ' + str(result)
+  for (i, r) in enumerate(result):
+    # # print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore')
     item_s = []
-    for i in r['items']:
-      #print 'item->' + i['name'].encode('utf-8','ignore') 
-      # #print i['name']
-      if i['embed'] == '':
-        continue
-      nm =   i['name'].encode('utf-8','ignore')
-      nm = nm.replace('&lt;','').replace('&gt;','')
+    if r is not None and r['items'] is not None:
+      for i in r['items']:
+        ## print 'item->' + i['name'].encode('utf-8','ignore') 
+        # ## print i['name']
+        if i['embed'] == '':
+          continue
+        nm =   i['name'].encode('utf-8','ignore')
+        nm = nm.replace('&lt;','').replace('&gt;','')
 
-      item = MovieItem( 
-        name=nm,
-        url=i['url'],
-        image=i['image'],
-        embed=i['embed']
-        )
-      item_s.append(item)
+        item = MovieItem( 
+          name=nm,
+          url=i['url'],
+          image=i['image'],
+          embed=i['embed']
+          )
+        item_s.append(item)
 
-    print 'item length is ' + str(len(item_s))
+    # # print 'item length is ' + str(len(item_s))
     if len(item_s) > 0:
       # already = Movie.query(Movie.name == r['name'].encode('utf-8','ignore')).get()
-      # print 'already is ' + str(already)
+      # # print 'already is ' + str(already)
       # if already:
       #   already.name = r['name'].encode('utf-8','ignore') 
       #   url = r['url']
@@ -395,7 +417,8 @@ def new_fetch_movies(q):
       #   items = item_s
       #   already.put()
       # else:
-      delete_movies(q.encode('utf-8','ignore'))
+      delete_movies(r['name'])
+      # delete_movies(q.encode('utf-8','ignore'))
       movie = Movie(
         parent=ndb.Key("Movie", q.encode('utf-8','ignore')),
         name=r['name'].encode('utf-8','ignore'),
@@ -405,24 +428,29 @@ def new_fetch_movies(q):
         )
       print 'movie->' + r['name'].encode('utf-8','ignore')   
       movie.put()
-      print movie
+      # print str(movie)
 
 def delete_movies(q):
-  ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
-  mm = Movie.query_movie(ancestor_key).fetch()
-  for m in mm:
-    if m:
-      print ' delete rows is ' + str(m)
-      print str(m.key.delete())
-
+  # print 'def delete_movies(q): ' + q
+  try:
+    # ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+    # mm = Movie.query_movie(ancestor_key).fetch()
+    mm = Movie.query(Movie.name==q.encode('utf-8')).fetch()
+    for m in mm:
+      if m:
+        # # print ' delete rows is ' + str(m)
+        print m.key.delete()
+  except UnicodeDecodeError:
+    print 'UnicodeDecodeError occured... in delete_movies'
+    pass
 # class Werisdfls51Page(webapp2.RequestHandler):
 #   def get(self):
 #     ancestor_key = ndb.Key("MovieTitle", "TitleList")
 #     mm = MovieTitle.query_movie(ancestor_key).fetch()
 #     for m in mm:
 #       if m:
-#         print ' delete rows is ' + str(m)
-#         print str(m.key.delete())
+#         # print ' delete rows is ' + str(m)
+#         # print str(m.key.delete())
 #     nhnUrl()
 #     self.response.headers['Content-Type'] = 'application/json'
 #     self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
@@ -430,10 +458,10 @@ def delete_movies(q):
 class Wfr4Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')    
-    #print 'Wfr4Page get ' + str(q.encode('utf-8'))
+    ## print 'Wfr4Page get ' + str(q.encode('utf-8'))
     # delete_movies(q)
     new_fetch_movies(q)
-    #print 'is called new_fetch_movies '
+    ## print 'is called new_fetch_movies '
     self.response.headers['Content-Type'] = 'application/json'
     # self.response.out.write(json.dumps(movies))
     ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
@@ -442,10 +470,10 @@ class Wfr4Page(webapp2.RequestHandler):
 # class Wfr4Page(webapp2.RequestHandler):
 #   def get(self):
 #     q = self.request.get('q')    
-#     #print 'Wfr4Page get ' + str(q.encode('utf-8'))
+#     ## print 'Wfr4Page get ' + str(q.encode('utf-8'))
 #     delete_movies(q)
 #     new_fetch_movies(q)
-#     #print 'is called new_fetch_movies '
+#     ## print 'is called new_fetch_movies '
 #     self.response.headers['Content-Type'] = 'application/json'
 #     # self.response.out.write(json.dumps(movies))
 #     ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
@@ -473,7 +501,7 @@ class Ewdfosid21Page(webapp2.RequestHandler):
     # gRankUrl('왕좌의 게임')
     q = self.request.get('q')
     m = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
-    print m
+    # print m
     if len(m) < 1:
       img_url = nhnImgUrl(q.encode('utf-8'))
       # rank = gRankUrl(q.encode('utf-8'))
@@ -498,28 +526,28 @@ class Usoidsfjk12Page(webapp2.RequestHandler):
     nm = self.request.get('nm')
     rnk = self.request.get('rnk')
     mm = MovieTitle.query(MovieTitle.name == nm.encode('utf-8')).fetch(1)
-    # print mm
+    # # print mm
     for m in mm:
       if m:
         sandy = m.key.get()
         # if rnk is None:
         #   rnk = 0
-        print 'rnk is ' + str(rnk)
+        # print 'rnk is ' + str(rnk)
         a = re.search(r'[\d]+', rnk, re.M|re.I)
         if rnk is not None and a:
           sandy.rank = int(rnk)
         else:
           sandy.rank = 0
         sandy.put()
-    print mm    
+    # print mm
 
 class Ewdfosid62Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
     mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
-    #print mm
+    ## print mm
     aaa = [ m.key.delete() for m in mm if m]
-    print aaa
+    
     # ancestor_key = ndb.Key("MovieTitle", "TitleList")
     # self.response.headers['Content-Type'] = 'application/json'
     # self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
@@ -530,7 +558,7 @@ class Ewdfosid67Page(webapp2.RequestHandler):
     mm = Movie.query_movie(ndb.Key("Movie", q.encode('utf-8','ignore'))).fetch()
     if mm:
       aaa = [ m.key.delete() for m in mm if m]
-      print aaa
+      # logging.info( aaa )
 
 class Ewdfosid93Page(webapp2.RequestHandler):
   def get(self):
@@ -544,9 +572,9 @@ class Ewdfosid93Page(webapp2.RequestHandler):
             )
     movie_title.put()
     # mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
-    #print mm
+    ## print mm
     # aaa = [ m.key.delete() for m in mm if m]
-    #print aaa
+    ## print aaa
     ancestor_key = ndb.Key("MovieTitle", "TitleList")
     # self.response.headers['Content-Type'] = 'application/json'
     # self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
@@ -586,10 +614,10 @@ class Ewdfosid71Page(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/json'
 
     if datas is not None:
-      print 'in memcache #####>' + str(datas)
+      # logging.info( 'in memcache #####>' + str(datas) )
       self.response.out.write(datas)
     else:
-      print 'in datastore #####>' + str(datas)
+      # logging.info( 'in datastore #####>' + str(datas) )
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
       datas = json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()])
       kkk = 'TitleList'
@@ -599,24 +627,24 @@ class Ewdfosid71Page(webapp2.RequestHandler):
         #              "USA_94043": "sunny" },
         #              key_prefix="weather_", time=3600)
         print 'Memcache set fail of MovieTitle'
-      self.response.out.write(datas)
+        self.response.out.write(datas)
       
 class Eftfsog34Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')   
     self.response.headers['Content-Type'] = 'application/json'
     datas = memcache.get('s_%s' % q.encode('utf-8'))
-    print 'in memcache #####>' + str(datas)
+    # logging.info( 'in memcache #####>' + str(datas) )
     if datas is not None:
       self.response.out.write(datas)
     else:
       ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
       datas = json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch(projection=[Movie.name, Movie.image, Movie.url])])
-      print 'in ndb #####>' + str(len(datas))
+      # logging.info( 'in ndb #####>' + str(len(datas)) )
       kkk = q.encode('utf-8')
       if not memcache.set_multi({kkk:datas}, key_prefix='s_', time=3600*24*7):
         print 'Memcache set fail of Season'
-        self.response.out.write(datas)
+      self.response.out.write(datas)
 
 class Eftfsog92Page(webapp2.RequestHandler):
   def get(self):
@@ -631,9 +659,46 @@ class Eftfsog92Page(webapp2.RequestHandler):
       kkk = q.encode('utf-8')
       if not memcache.set_multi({kkk:datas}, key_prefix='e_', time=3600*24*7):
         print 'Memcache set fail of Episode'
-        self.response.out.write(datas)
+      self.response.out.write(datas)
 
-        
+class Yiowijk123(webapp2.RequestHandler):
+  def get(self):
+    t = self.request.get('t') # title
+    i = self.request.get('i') # image
+    p = self.request.get('p') # playlist
+    mt = KidsMovie.query(KidsMovie.name==t.encode('utf-8')).fetch()
+    for m in mt:
+      # logging.info( str(m.key.delete()) )
+      movie = KidsMovie(
+              parent=ndb.Key("Kids", "movie"),
+              name=t.encode('utf-8'),
+              image=i,
+              playlist=p
+              )
+      movie.put()
+    # ancestor_key = ndb.Key("MovieTitle", "TitleList")
+
+class Yiowijlk09(webapp2.RequestHandler):
+  def get(self):
+    datas = memcache.get('%s_list' % "kids")
+    self.response.headers['Content-Type'] = 'application/json'
+
+    if datas is not None:
+      # print 'in memcache #####>' + str(datas) 
+      self.response.out.write(datas)
+    else:
+      # print 'in datastore #####>' + str(datas)
+      ancestor_key = ndb.Key("Kids", "movie")
+      datas = json.dumps([p.to_dict() for p in KidsMovie.query_movie(ancestor_key).fetch()])
+      kkk = 'list'
+      if not memcache.set_multi({kkk:datas}, key_prefix='kids_', time=3600*24*7):
+        # memcache.set_multi({ "USA_98105": "raining",
+        #              "USA_94105": "foggy",
+        #              "USA_94043": "sunny" },
+        #              key_prefix="weather_", time=3600)
+        print 'Memcache set fail of MovieTitle'
+      self.response.out.write(datas)
+
 app = webapp2.WSGIApplication([
     ('/wfr4', Wfr4Page),
     ('/eftfsog34', Eftfsog34Page),   # get Movie from url q 
@@ -653,5 +718,8 @@ app = webapp2.WSGIApplication([
     ('/oisdfuis43', PutNotice), # put Notice
     ('/osdisdfsid', GetNotice), # get Notice
 
+
+    ('/yiowijk123', Yiowijk123), # update image and ranking from MovieTiele
+    ('/yiowijlk09', Yiowijlk09), # update image and ranking from MovieTiele
     # Usoidsfjk12Page
 ], debug=True)

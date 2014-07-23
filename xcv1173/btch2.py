@@ -14,7 +14,7 @@ import base64
 import codecs
 from random import randint
 
-# _server_ = 'http://localhost:8080'
+#_server_ = 'http://localhost:8080'
 _server_ = 'http://xcv1173.appspot.com/'
 
 
@@ -593,13 +593,13 @@ def makememcache():
 	print 'Finished..'
 
 if __name__ == '__main__':
-	# addmoviefromfile() 
+	#addmoviefromfile() 
 	# updatetitlefromnhn()
-	updateRankBatch()
+	# updateRankBatch()
 
-	# initialBatch()
+	initialBatch()
 	# insertMovie()
 	# delAllMovieBatch()
 	# delAllMovieTitleBatch()
-	# makememcache()
+	#makememcache()
 

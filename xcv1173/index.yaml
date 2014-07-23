@@ -10,7 +10,7 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: Movie
+- kind: KidsMovie
   ancestor: yes
   properties:
   - name: name
@@ -21,21 +21,11 @@ indexes:
   properties:
   - name: name
     direction: desc
-  - name: image
-  - name: url
 
 - kind: MovieTitle
   ancestor: yes
   properties:
   - name: name
-    direction: desc
-
-- kind: MovieTitle
-  ancestor: yes
-  properties:
-  - name: name
-    direction: desc
-  - name: rank
     direction: desc
 
 - kind: MovieTitle
