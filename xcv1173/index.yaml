@@ -22,6 +22,14 @@ indexes:
   - name: name
     direction: desc
 
+- kind: Movie
+  ancestor: yes
+  properties:
+  - name: name
+    direction: desc
+  - name: image
+  - name: url
+
 - kind: MovieTitle
   ancestor: yes
   properties:

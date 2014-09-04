@@ -477,7 +477,7 @@ def updateRankBatch():
 			# http://xcv1173.appspot.com/usoidsfjk12?nm=%EC%99%95%EC%A2%8C%EC%9D%98%20%EA%B2%8C%EC%9E%84&rnk=1000000
 			result2 = urllib2.urlopen(upurl)
 			print o['name'].encode('utf-8') + '-->' + result2.read()
-			time.sleep(randint(30,100))
+			time.sleep(randint(20,40))
 
 	print 'Finished..'
 
@@ -571,6 +571,13 @@ def addmoviefromfile():
 	# print result2
 	print 'Finished...'
 
+# def del_dup_title():
+#   print 'del duplicated title'
+#   url = _server_ + '/ewdfosid71'
+#   result = urllib2.urlopen(url)
+#   lll = json.loads(result.read())
+#   for o in lll:
+    
 
 def makememcache():
 	print 'makememcache begin'
@@ -595,11 +602,11 @@ def makememcache():
 if __name__ == '__main__':
 	# addmoviefromfile() 
 	# updatetitlefromnhn()
-	updateRankBatch()
+	# updateRankBatch()
 
 	# initialBatch()
 	# insertMovie()
 	# delAllMovieBatch()
 	# delAllMovieTitleBatch()
-	# makememcache()
+	makememcache()
 

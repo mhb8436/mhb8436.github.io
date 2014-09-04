@@ -73,67 +73,44 @@ class KidsMovie(ndb.Model):
 
 
 def read_videopage_url(url):
-  ## print 'read_videopage_url ' + url
-
-  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  # urllib2.install_opener(opener)
-  # opener.addheaders = [
-  #   #  ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-  #   # # ,('accept-encoding','gzip,deflate,sdch')
-  #   # ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-  #   # ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  # ]
-  # google_res = opener.open(url)
   google_res = urllib2.urlopen(url)
-  ## print google_res.info().get('Content-Encoding')
-  # if google_res.info().get('Content-Encoding') == 'gzip':
-  # buf = StringIO( google_res.read() )
-  # f = gzip.GzipFile(fileobj=buf)
   content = google_res.read()
-
-  # dataus = re.findall(r'<a class="en[a-zA-Z0-9\_\s]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
   dataus = re.findall(r'<div class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
-  # names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
-  # images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
+  iframedt = re.search(r'<iframe [\d\w\=\"\ ]+ src="[\/\w\d]+"', content, re.M|re.I)
   b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
 
   result = [] 
-  ## print str(len(dataus))
   if dataus:
     for i, d in enumerate(dataus):
-      # ## print images[i]      unicode(writer,  "euc-kr").encode("utf-8", "ignore")
       try:
-        # nm= extcont(names[i])
-        # ## print nm
         result.append({'url':decodeUrl(extattr(b.group()), extattr(dataus[i])) })
       except IndexError:
         pass
-
-    return result
+  elif iframedt:
+    http_url = re.search(r'http://[a-zA-Z\.]+\/', url, re.M|re.I)
+    http_uri = re.search(r'src="[\d\w\/]+"', iframedt.group(), re.M|re.I)
+    http_uri = http_uri.group().replace('src=','').replace('"','')
+    print http_url.group()+'/'+http_uri
+    google_res = urllib2.urlopen(http_url.group()+'/'+http_uri)
+    content = google_res.read()
+    idataus = re.findall(r'<source[\ \"\d\w\s]e-src="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+    b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
+    # print idataus
+    for i, d in enumerate(idataus):
+      try:
+        print 
+        result.append({'url':decodeUrl(extattr(b.group()), extattr(idataus[i])) })
+      except IndexError:
+        pass
+  
+  return result
 
 def read_listresult_url(q, url, cur_page, max_page):
-  ## print 'read_listresult_url ' + url
-  # # print 'read_listresult_url(q, url, cur_page=1, max_page=1): ' + str(cur_page) + '==' + str(max_page)
   if cur_page > max_page:
     return
   cur_page += 1
-  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  # urllib2.install_opener(opener)
-  # opener.addheaders = [
-  #    ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-  #   ,('accept-encoding','gzip,deflate,sdch')
-  #   ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-  #   ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  # ]
   google_res = urllib2.urlopen(url)
-  # google_res = opener.open(url)
-  # print google_res.info().get('Content-Encoding')
-  # if google_res.info().get('Content-Encoding') == 'gzip':
-  # buf = StringIO( google_res.read() )
-  # f = gzip.GzipFile(fileobj=buf)
   content = google_res.read()
-  # content = f.read()
-  # print content
   dataus = re.findall(r'<a class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
   names = re.findall(r'<span class="name">[^\<\>]*</span>',content, re.M|re.I)
   images = re.findall(r'<img src="http://[^\<]*',content, re.M|re.I)
@@ -182,29 +159,14 @@ def read_listresult_url(q, url, cur_page, max_page):
         if aaa:
           result += aaa
         return result
-    print '--- return ----'      
-    print result 
-    return result
+    # print '--- return ----'      
+  # print result
+  return result
 
 def read_searchresult_url(q, url):
-  # print 'read_searchresult_url ' + url
+  print 'read_searchresult_url ' + url
 
-  # 
-  # opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
-  # urllib2.install_opener(opener)
-  # opener.addheaders = [
-  #    ('accept','text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
-  #   ,('accept-encoding','gzip,deflate,sdch')
-  #   ,('accept-language','en-US,en;q=0.8,ko;q=0.6')
-  #   ,('user-agent','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36')
-  # ]
-  # google_res = opener.open(url)
   google_res = urllib2.urlopen(url)
-  # print google_res.info().get('Content-Encoding')
-  # if google_res.info().get('Content-Encoding') == 'gzip':
-  # buf = StringIO( google_res.read() )
-  # f = gzip.GzipFile(fileobj=buf)
-  # content = f.read()
   content = google_res.read()
   contents = re.search(r'미드(.*)</h5>(.*)', content, re.M|re.I)
   ## print contents 
@@ -359,24 +321,25 @@ def nhnImgUrl(q):
 
 
 def new_fetch_movies(q):
-  print 'begin new_fetch_movies ... '
-  print q.encode('utf-8')
+  print 'begin new_fetch_movies ... ' + q.encode('utf-8')
+
   result = read_searchresult_url(q, 'http://searchpang.com/finder?q='+urllib.quote(q.encode('utf-8'))+'&search_tags%5B%5D='+urllib.quote("미드") +'&category=list')
   # print result
   isMovie = True
   for r in result: # movie items
-    print 'new_fetch_movies url is '  + r['url']
     r['items'] = read_listresult_url(q, r['url'], 1, 1)
+    # print ' before -------------->' + q.encode('utf-8') + '___' + r['url']
+    print 'new_fetch_movies url is '  + r['url'] + '^_____^' + r['name'].encode('utf-8') + '~~~~' + str(r['items'])
     if r is not None and r['items'] is not None:
       for s in r['items']: # item player  
         isMovie = False
         p = read_videopage_url(s['url']) # player url
-        ## print str(s['url']) + '===' + str(p)
+        # print str(s['name']) + '_______' + str(s['url']) + '===' + str(p)
         if p and len(p):
           s['embed'] = p[0]['url']
         else:
           s['embed'] = ''
-  
+  # print result
   try:
     if isMovie:
       mt = MovieTitle.query(MovieTitle.name==q.encode('utf-8')).fetch()
@@ -387,7 +350,7 @@ def new_fetch_movies(q):
 
   # print 'new fetch movies result is ' + str(result)
   for (i, r) in enumerate(result):
-    # # print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore')
+    # print '-----------> ' + str(i) + ' ' + r['name'].encode('utf-8','ignore') + '  ' + r['url']
     item_s = []
     if r is not None and r['items'] is not None:
       for i in r['items']:
@@ -408,17 +371,7 @@ def new_fetch_movies(q):
 
     # # print 'item length is ' + str(len(item_s))
     if len(item_s) > 0:
-      # already = Movie.query(Movie.name == r['name'].encode('utf-8','ignore')).get()
-      # # print 'already is ' + str(already)
-      # if already:
-      #   already.name = r['name'].encode('utf-8','ignore') 
-      #   url = r['url']
-      #   images = r['image']
-      #   items = item_s
-      #   already.put()
-      # else:
       delete_movies(r['name'])
-      # delete_movies(q.encode('utf-8','ignore'))
       movie = Movie(
         parent=ndb.Key("Movie", q.encode('utf-8','ignore')),
         name=r['name'].encode('utf-8','ignore'),
@@ -428,7 +381,7 @@ def new_fetch_movies(q):
         )
       print 'movie->' + r['name'].encode('utf-8','ignore')   
       movie.put()
-      # print str(movie)
+      print str(movie)
 
 def delete_movies(q):
   # print 'def delete_movies(q): ' + q
@@ -520,6 +473,7 @@ class Ewdfosid21Page(webapp2.RequestHandler):
     self.response.headers['Content-Type'] = 'application/json'
     self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
 
+
 class Usoidsfjk12Page(webapp2.RequestHandler):
   # update rank from q
   def get(self):
@@ -544,9 +498,9 @@ class Usoidsfjk12Page(webapp2.RequestHandler):
 class Ewdfosid62Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
-    mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
+    mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(2)
     ## print mm
-    aaa = [ m.key.delete() for m in mm if m]
+    aaa = [ m.key.delete() for m in mm if m and m.rank == 0 and len(mm) >1]
     
     # ancestor_key = ndb.Key("MovieTitle", "TitleList")
     # self.response.headers['Content-Type'] = 'application/json'
@@ -593,14 +547,15 @@ class Durtka18Page(webapp2.RequestHandler):
     print movielst
     for p in movielst:
       dd =  p.to_dict()
-      # delete_movies(dd['name'])
+      print dd['name'].encode('utf-8')
       new_fetch_movies(dd['name'])
-      # time.sleep(randint(5,17))
-      # time.sleep(60)
-    if q:  
-      ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+      ancestor_key = ndb.Key("Movie", dd['name'].encode('utf-8') or "*notitle*")
       self.response.headers['Content-Type'] = 'application/json'
       self.response.out.write(json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()]))
+    # if q:
+    #   ancestor_key = ndb.Key("Movie", q.encode('utf-8') or "*notitle*")
+    #   self.response.headers['Content-Type'] = 'application/json'
+    #   self.response.out.write(json.dumps([p.to_dict() for p in Movie.query_movie(ancestor_key).fetch()]))
 
 class Durtka18PageHandler(webapp2.RequestHandler):
   def get(self):
