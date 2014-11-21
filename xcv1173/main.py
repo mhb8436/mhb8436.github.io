@@ -560,7 +560,8 @@ class Durtka18Page(webapp2.RequestHandler):
 class Durtka18PageHandler(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
-    taskqueue.add(url='/tasks/durtka18', params={'q': q})
+    print 'Durtka18PageHandler'
+    # taskqueue.add(url='/tasks/durtka18', params={'q': q})
 
   
 class Ewdfosid71Page(webapp2.RequestHandler):

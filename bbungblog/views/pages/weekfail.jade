@@ -1,0 +1,154 @@
+header.header
+  a.logo(href='/')
+    //
+       Add the class icon to your logo image or logo icon to add the margining 
+    | CFront Admin
+  //
+     Header Navbar: style can be found in header.less 
+  nav.navbar.navbar-static-top(role='navigation')
+    //
+       Sidebar toggle button
+    //- a.navbar-btn.sidebar-toggle(href='#', data-toggle='offcanvas', role='button')
+    //-   span.sr-only Toggle navigation
+    //-   span.icon-bar
+    //-   span.icon-bar
+    //-   span.icon-bar
+    .navbar-right
+      ul.nav.navbar-nav
+        //
+           User Account: style can be found in dropdown.less 
+        li.dropdown.user.user-menu
+          a.dropdown-toggle(href='#', data-toggle='dropdown')
+            i.glyphicon.glyphicon-user
+            span
+              | #{userid}
+              i.caret
+          ul.dropdown-menu
+            //
+               User image 
+            li.user-header.bg-light-blue
+              img.img-circle(src='/images/avatar3.png', alt='User Image')
+              p
+                | #{userid}
+                small create by ethan lee
+
+            li.user-footer
+              .pull-right
+                a.btn.btn-default.btn-flat(href='#', ng-click="signout()") Sign out
+
+.wrapper.row-offcanvas.row-offcanvas-left
+  //
+     Left side column. contains the logo and sidebar 
+  aside.left-side.sidebar-offcanvas
+    //
+       sidebar: style can be found in sidebar.less 
+    section.sidebar
+      //
+         Sidebar user panel 
+      .user-panel
+        .pull-left.image
+          img.img-circle(src='/images/avatar2.png', alt='User Image')
+        .pull-left.info
+          p Hello, #{userid}
+          a(href='#')
+            i.fa.fa-circle.text-success
+            | Online
+      //
+         search form 
+      //- form.sidebar-form(action='#', method='get')
+      //-   .input-group
+      //-     input.form-control(type='text', name='q', placeholder='Search...')
+      //-     span.input-group-btn
+      //-       button#search-btn.btn.btn-flat(type='submit', name='seach')
+      //-         i.fa.fa-search
+      ul.sidebar-menu(admin-menu='menuOptions')
+        //
+          li.active
+            a(href='/#/domain')
+              i.fa.fa-edit
+              span Domain
+              i.fa.fa-angle-left.pull-right
+          li.active
+            a(href='/#/config')
+              i.fa.fa-table
+              span Config
+              i.fa.fa-angle-left.pull-right
+          
+          li.active
+            a(href='/#/group')
+              i.fa.fa-calendar
+              span Group & AP
+              i.fa.fa-angle-left.pull-right
+        
+    //
+       /.sidebar 
+  //
+     Right side column. Contains the navbar and content of the page 
+  aside.right-side
+    //
+       Content Header (Page header) 
+    section.content-header
+      h1
+        | Weekly Fail Report
+        //- small management
+      ol.breadcrumb
+        li
+          a(href='#')
+            i.fa.fa-dashboard
+            | Home
+        li
+          a(href='#') Weekly Fail Report
+
+    //
+       Main content 
+    section.content
+      //- .row
+      //-   .col-xs-12
+      //-     .box
+      //-       .box-body
+      //-         button.btn.btn-info.btn-block(ng-click="addConfig()")
+      //-           | Add Profile
+      .row
+        .col-xs-12
+          .box
+            .box-header
+              h3.box-title Model list
+            //
+               /.box-header 
+            .box-body.table-responsive
+              table#mainTable.table.table-bordered.table-striped(ng-grid-table="overrideOptions" fn-row-callback="displayRow" fn-header-callback="displayHeader")
+                tfoot
+                  tr.header
+                    th operator
+                    th model
+                    th os
+                    th population
+                    th prev.suc
+                    th prev.fail
+                    th cur.suc
+                    th cur.fail
+                    th cur.ratio
+                    th history
+                thead
+                  tr.header
+                    th operator
+                    th model
+                    th os
+                    th population
+                    th prev.suc
+                    th prev.fail
+                    th cur.suc
+                    th cur.fail
+                    th cur.ratio
+                    th history
+            //
+               /.box-body 
+          //
+             /.box 
+    //
+       /.content 
+  //
+     /.right-side 
+//
+   ./wrapper 
+//

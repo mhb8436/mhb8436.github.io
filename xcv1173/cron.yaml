@@ -1,4 +1,1 @@
 cron:
-- description: weekly jobs
-  url: /tasks/durtka18handler
-  schedule: every thursday 09:00

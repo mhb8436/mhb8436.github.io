@@ -1,0 +1,220 @@
+header.header
+  a.logo(href='/')
+    //
+       Add the class icon to your logo image or logo icon to add the margining 
+    | CFront Admin
+  //
+     Header Navbar: style can be found in header.less 
+  nav.navbar.navbar-static-top(role='navigation')
+    //
+       Sidebar toggle button
+    //- a.navbar-btn.sidebar-toggle(href='#', data-toggle='offcanvas', role='button')
+    //-   span.sr-only Toggle navigation
+    //-   span.icon-bar
+    //-   span.icon-bar
+    //-   span.icon-bar
+    .navbar-right
+      ul.nav.navbar-nav
+        //
+           User Account: style can be found in dropdown.less 
+        li.dropdown.user.user-menu
+          a.dropdown-toggle(href='#', data-toggle='dropdown')
+            i.glyphicon.glyphicon-user
+            span
+              | #{userid}
+              i.caret
+          ul.dropdown-menu
+            //
+               User image 
+            li.user-header.bg-light-blue
+              img.img-circle(src='/images/avatar3.png', alt='User Image')
+              p
+                | #{userid}
+                small create by ethan lee
+
+            li.user-footer
+              .pull-right
+                a.btn.btn-default.btn-flat(href='#', ng-click="signout()") Sign out
+
+.wrapper.row-offcanvas.row-offcanvas-left
+  //
+     Left side column. contains the logo and sidebar 
+  aside.left-side.sidebar-offcanvas
+    //
+       sidebar: style can be found in sidebar.less 
+    section.sidebar
+      //
+         Sidebar user panel 
+      .user-panel
+        .pull-left.image
+          img.img-circle(src='/images/avatar2.png', alt='User Image')
+        .pull-left.info
+          p Hello, #{userid}
+          a(href='#')
+            i.fa.fa-circle.text-success
+            | Online
+      //
+         search form 
+      //- form.sidebar-form(action='#', method='get')
+      //-   .input-group
+      //-     input.form-control(type='text', name='q', placeholder='Search...')
+      //-     span.input-group-btn
+      //-       button#search-btn.btn.btn-flat(type='submit', name='seach')
+      //-         i.fa.fa-search
+      ul.sidebar-menu(admin-menu='menuOptions')
+        //
+          li.active
+            a(href='/#/domain')
+              i.fa.fa-edit
+              span Domain
+              i.fa.fa-angle-left.pull-right
+          li.active
+            a(href='/#/config')
+              i.fa.fa-table
+              span Config
+              i.fa.fa-angle-left.pull-right
+          
+          li.active
+            a(href='/#/group')
+              i.fa.fa-calendar
+              span Group & AP
+              i.fa.fa-angle-left.pull-right
+        
+    //
+       /.sidebar 
+  //
+     Right side column. Contains the navbar and content of the page 
+  aside.right-side
+    //
+       Content Header (Page header) 
+    section.content-header
+      h1
+        | Agent Control
+        //- small management
+      ol.breadcrumb
+        li
+          a(href='#')
+            i.fa.fa-dashboard
+            | Home
+        li
+          a(href='#') Agent Control
+
+    //
+       Main content 
+    section.content
+      //- .row
+      //-   .col-xs-12
+      //-     .box
+      //-       .box-body
+      //-         button.btn.btn-info.btn-block(ng-click="addConfig()")
+      //-           | Add Profile
+      .row
+        .col-xs-12
+          .box
+            .box-header
+              h3.box-title Model List
+            //
+               /.box-header 
+            .box-body.table-responsive
+              .alert.alert-danger.alert-dismissable(ng-show="alertshow")
+                i.fa.fa-ban
+                button.close(type="button", data-dismiss="alert", aria-hidden="true")
+                b alert 
+                span(style="padding-left:5px;" ng-bind="alertmsg")
+              table#mainTable.table.table-bordered.table-striped(ng-grid-table="overrideOptions" fn-row-callback="displayRow" fn-header-callback="displayHeader")
+                tfoot
+                  tr.header
+                    th groupkey
+                    th model
+                    th mosver
+                    th pkgnm
+                    th apppkgnm
+                    th playservicemode
+                    th verCode
+                    th bOnOff
+                thead
+                  tr.header
+                    th groupkey
+                    th model
+                    th mosver
+                    th pkgnm
+                    th apppkgnm
+                    th playservicemode
+                    th verCode
+                    th bOnOff
+            //
+               /.box-body 
+          //
+             /.box 
+    //
+       /.content 
+  //
+     /.right-side 
+//
+   ./wrapper 
+//
+   COMPOSE MESSAGE MODAL
+
+  #compose-modal.modal.fade(tabindex='-1', role='dialog', aria-hidden='true')
+    .modal-dialog
+      .modal-content
+        .modal-header
+          button.close(tabindex='-1', role='dialog', aria-hidden='true')
+          h4.modal-title
+            |  Profile List
+        form(method='post')
+          .modal-body
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') Profile code
+                input.form-control(ng-model="editedItem.config.id", name='id', id='id', type='hidden', placeholder='id')              
+                input.form-control(ng-model="editedItem.config.code", name='code', id='code', type='text', placeholder='Unique Code of Profile', style='width:410px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') Profile version
+                input.form-control(ng-model="editedItem.config.configver", name='configver', id='configver', type='text', placeholder='Major version of Profile', style='width:410px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') Description
+                input.form-control(ng-model="editedItem.config.descs", name='descs', id='descs', type='text', placeholder='Description', style='width:410px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') crate
+                input.form-control(ng-model="editedItem.config.crate", name='crate', id='crate', type='text', placeholder='Default Cellular-Prefer Levels (optional, 0(off), 1-5)', style='width:410px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') pmode
+                input.form-control(ng-model="editedItem.config.pmode", name='pmode', id='pmode', type='text', placeholder='Default AP-Thru Mode (optional, on/off)', style='width:410px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') limit_rate
+                input.form-control(ng-model="editedItem.config.limit_rate", name='limit_rate', id='limit_rate', type='text', placeholder='Default Limit Bandwidth (when AP-Thru, kbps)', style='width:410px;')
+
+            //- .form-group
+            //-   .input-group
+            //-     span.input-group-addon(style='width:140px;') limit_rate, pmode, crate
+            //-     input.form-control(ng-model="editedItem.config.limit_rate", name='limit_rate', id='limit_rate', type='text', placeholder='limit_rate', style='width:130px;')
+            //-     input.form-control(ng-model="editedItem.config.pmode", name='pmode', id='pmode', type='text', placeholder='pmode', style='width:130px;')
+            //-     input.form-control(ng-model="editedItem.config.crate", name='crate', id='crate', type='text', placeholder='crate', style='width:130px;')
+            .form-group
+              .input-group
+                span.input-group-addon(style='width:140px;') Mapped Domain
+                select.form-control#domainConfig(style='width:410px;', multiple, domain-config='domainconfig')
+            //- .form-group
+            //-   .input-group
+            //-     span.input-group-addon(style='width:140px;') Mapped Blacklist
+            //-     select.form-control#blacklistConfig(style='width:410px;', multiple, blacklist-config='blacklistconfig')
+
+          .modal-footer.clearfix
+            button.btn.btn-default(type='button', data-dismiss='modal')
+              |  Cancel
+            button.btn.btn-danger(type='button', ng-confirm-click='deleteconfig()')
+              |  Delete
+            button.btn.btn-primary(type='submit', ng-click='saveconfig()')
+              |  Save
+      //
+         /.modal-content 
+    //
+       /.modal-dialog 
+  //
+     /.modal 
