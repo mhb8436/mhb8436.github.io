@@ -41,6 +41,6 @@ def parse(data):
 			print line
 
 if __name__ == '__main__':
-	url = "http://www.youtube.com/watch?v=R2eDaiJtJug&list=PLgj0EZQkHj4ZdTvntZQ2NztbkHU3cMtAH"
+	url = "http://www.youtube.com/watch?v=tdLeW41jdBo&list=PLawdY97HdndRyqbW3Qbhh1scfE1JCPnCf"
 	data=get_data_from_url(url)
 	parse(data)
