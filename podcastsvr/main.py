@@ -110,6 +110,22 @@ class Channel(ndb.Model):
         elif x == 'rnkwom'
             return cls.query(ancestor=ancestor_key).order(-cls.rnkwom)
 
+# for app 
+# 1. get top channel by age
+# 2. get top channel by general ranking
+# 3. get top channel by category
+# 4. get top channel by week 
+# 
+# 5. update age rank of channel 
+# 6. update week rank of channel
+# 7. update general rank of channel 
+# 
+# 
+# for grep from podjjang
+# 1. category fix
+# 2. input channel per category id of podjjang
+# 3. input episode per channel id of podjjang
+
 
 
 class MainHandler(webapp2.RequestHandler):
