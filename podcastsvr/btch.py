@@ -26,7 +26,7 @@ def get_data_from_url(url):
     ]
     try:
         res = opener.open(url)
-        print res.info().get('Content-Encoding')
+        # print res.info().get('Content-Encoding')
         if res.info().get('Content-Encoding') == 'gzip':
             buf = StringIO( res.read() )
             f = gzip.GzipFile(fileobj=buf)
@@ -38,10 +38,18 @@ def get_data_from_url(url):
 def parse_channel(content):
     print content
     thumbs = re.findall(r'(?<=<div class="thumb"><img src=")[\w\:\/\.\d]+', content, re.I|re.M)
-    titles = re.findall(r'(?<=<p>)\W+(?=</p>)', content, re.I|re.M)
+    titles = re.findall(r'(?<=<p>)(\W+|[^\<]+)(?=</p>)', content, re.I|re.M)
     urls = re.findall(r'(?<=<a class="view" href=")[\d\/\w]+(?=">)', content, re.I|re.M)
+    print str(len(titles))
+    print str(len(thumbs))
+    print str(len(urls))
     if thumbs and titles and urls and len(thumbs) == len(titles) and len(thumbs) == len(urls):
-            
+        for i, d in enumerate(titles):
+            try:
+                print thumbs[i] + '---' + titles[i] + '----' + urls[i]
+            except IndexError:
+                pass
+
     # dataus = re.findall(r'<div class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
     # for i, d in enumerate(dataus):
 
