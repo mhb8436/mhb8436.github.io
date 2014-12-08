@@ -10,3 +10,31 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Category
+  ancestor: yes
+  properties:
+  - name: order
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk10
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk20
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: seq
+    direction: desc
