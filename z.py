@@ -51,13 +51,13 @@ def parse_category(content):
 
 def parse_epi_from_channel(content):
 	print content
-	title = re.findall(r'(?<=<dd class="tit">)[\W\d\w]+(?= </dd>)', content, re.M|re.I)
-	url = re.findall(r'(?<=<dd class="tit">)[\W\d\w]+(?= </dd>)', content, re.M|re.I)
-	image = re.findall(r'(?<=<dd class="tit">)[\W\d\w]+(?= </dd>)', content, re.M|re.I)
-	date = re.findall(r'(?<=<dd class="tit">)[\W\d\w]+(?= </dd>)', content, re.M|re.I)
-	for t,u,i,d in zip(title, url, image, date):
+	seq = re.findall(r'<dd>&nbsp;(.+).</dd>', content, re.M|re.I)
+	title = re.findall(r'<dd class="tit">(.+)</dd>', content, re.M|re.I)
+	url = re.findall(r'<a class="view" href="(.+)">', content, re.M|re.I)
+	date = re.findall(r'<dd class="date">(.+)</dd>', content, re.M|re.I)
+	for s,t,u,d in zip(seq, title, url, date):
 		try:
-			print t + '-' + u + '-' + i + '-' + d
+			print s + '-' + t + '-' + u + '-' + d
  		except IndexError:
 			pass 
 
