@@ -67,4 +67,9 @@ def parse_pod_from_category(content):
 if __name__ == '__main__':
 	# parse_category(get_data_from_url("http://m.podbbang.com/category")) # parse category
 	# parse_pod_from_category(get_data_from_url("http://m.podbbang.com/category/lists/0/1"))
+<<<<<<< HEAD
 	parse_epi_from_channel(get_data_from_url("http://m.podbbang.com/ch/lists/4362/1"))
+=======
+	parse_epi_from_channel(get_data_from_url("http://m.podbbang.com/ch/lists/4362/1"))
+
+>>>>>>> a4b4404cd85157c9dd8ce30ad0a0472bf63a734e
