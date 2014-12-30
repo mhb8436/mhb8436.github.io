@@ -5,6 +5,7 @@ import webapp2
 import webapp2_extras
 import csv
 import sys, time
+from datetime import datetime
 import re
 import urllib
 import urllib2
@@ -50,15 +51,15 @@ class Category(ndb.Model):
 class Episode(ndb.Model):
     seq = ndb.IntegerProperty(indexed=True)
     name = ndb.StringProperty(indexed=True)
-    typ = ndb.StringProperty()
+    type = ndb.StringProperty()
     url = ndb.StringProperty()
-    updt = ndb.DateTimeProperty()
-    dur = ndb.IntegerProperty()
+    update = ndb.DateTimeProperty()
+    duration = ndb.IntegerProperty()
     like = ndb.IntegerProperty()
     hate = ndb.IntegerProperty()
 
     @classmethod
-    def query(cls, ancestor_key):
+    def query_episode(cls, ancestor_key):
         return cls.query(ancestor=ancestor_key).order(-cls.seq)
     
 class Channel(ndb.Model):
@@ -87,7 +88,6 @@ class Channel(ndb.Model):
     rnk70  = ndb.IntegerProperty()
     rnkman = ndb.IntegerProperty()
     rnkwom = ndb.IntegerProperty()
-    episodes = ndb.StructuredProperty(Episode, repeated=True)
 
     @classmethod
     def query_channel(cls, ancestor_key):
@@ -180,7 +180,42 @@ class UpRank(webapp2.RequestHandler):
                 ch.rnkwom = ch.rnkwom+1 if 'rnkwom' in d and d['rnkwom'] is not None else ch.rnkwom
                 ch.put()
 
+class AddEpisode(webapp2.RequestHandler):
+    def post(self):
+        content = self.request.body
+        print '-----------------'
+        print str(self.request.body)
+        print '-----------------'
+        data = json.loads(content)
+
+        for d in data['data']:
+            ep_key = ndb.Key('Channel', str(data['channel_seq']), 'Episode', str(d['seq']))
+            epi = Episode.query_episode(ep_key).get()
+            if epi is None:
+                epi = Episode(parent=ep_key
+                    ,seq = d['seq']
+                    ,name = d['title']
+                    ,type = d['type']
+                    ,url = d['url']
+                    ,update = datetime.strptime(d['date'], '%Y.%m.%d')
+                    ,duration = int(d['duration'])
+                    ,like = 1
+                    ,hate = 1
+                    )
+            else:
+                epi.name = d['title'] if 'title' in d and d['title'] is not None else epi.name
+                epi.type = d['type'] if 'type' in d and d['type'] is not None else epi.type
+                epi.url = d['url'] if 'url' in d and d['url'] is not None else epi.url
+                epi.update = datetime.strptime(d['date'], '%Y.%m.%d') if 'update' in d and d['update'] is not None else epi.update
+                epi.duration = d['duration'] if 'duration' in d and d['duration'] is not None else epi.duration
+                epi.like = d['like'] if 'like' in d and d['like'] is not None else epi.like
+                epi.hate = d['hate'] if 'hate' in d and d['hate'] is not None else epi.hate
+            epi.put()
+            # print ch
+
+
 class AddChannel(webapp2.RequestHandler):
+
     def post(self):
         content = self.request.body
         print '-----------------'
@@ -276,19 +311,35 @@ class AddCategory(webapp2.RequestHandler):
 class listCategory(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'application/json'
-        cate_key = ndb.Key('Category', 'all')
-        cates = Category.query_category(cate_key).fetch()
-        self.response.out.write(json.dumps([p.to_dict() for p in cates],default=default))
+        dd = memcache.get('cate_list')
+        if dd is not None:
+            print 'listCategory memcache'
+            self.response.out.write(dd)
+        else:                
+            cate_key = ndb.Key('Category', 'all')
+            cates = Category.query_category(cate_key).fetch()
+            dd = json.dumps([p.to_dict() for p in cates],default=default)
+            if not memcache.set_multi({'list':dd}, key_prefix='cate_', time=3600*24):
+                print 'listCategory not memcache'
+                self.response.out.write(dd)
 
 class rankChannel(webapp2.RequestHandler):
     def get(self):
-        print 'listChannel : ' + self.request.get('rank')
-        self.response.headers['Content-Type'] = 'application/json'
-        ch_key = ndb.Key('Channel', 'all')
-        channels = Channel.query_by_rnk(ch_key, self.request.get('rank')).fetch()
-        self.response.out.write(json.dumps([p.to_dict() for p in channels],default=default))
+        rnk_key = self.request.get('rank')
+        dd = memcache.get('ch_rank_' + rnk_key)
+        if dd is not None:
+            print 'rankChannel memcache'
+            self.response.out.write(dd)
+        else:
+            print 'listChannel : ' + rnk_key
+            self.response.headers['Content-Type'] = 'application/json'
+            ch_key = ndb.Key('Channel', 'all')
+            channels = Channel.query_by_rnk(ch_key, rnk_key).fetch()
+            dd = json.dumps([p.to_dict() for p in channels],default=default)
+            if not memcache.set_multi({rnk_key:dd}, key_prefix='ch_rank', time=3600*24):
+                self.response.out.write(dd)
 
-class cateChannel(webapp2.RequestHandler):
+class listChannel(webapp2.RequestHandler):
     def get(self):
         print 'listChannel : ' + self.request.get('category_seq')
         self.response.headers['Content-Type'] = 'application/json'
@@ -296,17 +347,29 @@ class cateChannel(webapp2.RequestHandler):
         channels = Channel.query_by_rnk(ch_key, 'rnk').fetch()
         self.response.out.write(json.dumps([p.to_dict() for p in channels],default=default))
 
+class listEpisode(webapp2.RequestHandler):
+    def get(self):
+        print 'listEpisode : ' + self.request.get('channel_seq')
+        self.response.headers['Content-Type'] = 'application/json'
+        epi_key = ndb.Key('Channel', str(self.request.get('channel_seq')))
+        datas = json.dumps([p.to_dict() for p in Episode.query_episode(epi_key).fetch()] , default=default)
+        print datas
+        self.response.out.write(datas)
+
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
 
 app = webapp2.WSGIApplication([
+    
     ('/channel/uprank', UpRank),   # get Movie from url q 
     ('/channel/add', AddChannel),   # get Movie from url q 
+    ('/episode/add', AddEpisode),   # get Movie from url q 
     ('/category/add', AddCategory),   # get Movie from url q 
     ('/category/list', listCategory),   # get Movie from url q 
     ('/channel/rank', rankChannel),   # get Movie from url q 
-    ('/channel/cate', cateChannel),   # get Movie from url q 
+    ('/channel/list', listChannel),   # get Movie from url q 
+    ('/episode/list', listEpisode),   # get Movie from url q 
 
 ], debug=True)

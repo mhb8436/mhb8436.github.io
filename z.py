@@ -49,11 +49,22 @@ def parse_category(content):
 		except IndexError:
 			pass 
 
+def parse_epi_from_channel(content):
+	print content
+	seq = re.findall(r'<dd>&nbsp;(.+).</dd>', content, re.M|re.I)
+	title = re.findall(r'<dd class="tit">(.+)</dd>', content, re.M|re.I)
+	url = re.findall(r'<a class="view" href="(.+)">', content, re.M|re.I)
+	date = re.findall(r'<dd class="date">(.+)</dd>', content, re.M|re.I)
+	for s,t,u,d in zip(seq, title, url, date):
+		try:
+			print s + '-' + t + '-' + u + '-' + d
+ 		except IndexError:
+			pass 
 
 def parse_pod_from_category(content):
 	print content
 
 if __name__ == '__main__':
 	# parse_category(get_data_from_url("http://m.podbbang.com/category")) # parse category
-	parse_pod_from_category(get_data_from_url("http://m.podbbang.com/category/lists/0/1"))
-
+	# parse_pod_from_category(get_data_from_url("http://m.podbbang.com/category/lists/0/1"))
+	parse_epi_from_channel(get_data_from_url("http://m.podbbang.com/ch/lists/4362/1"))

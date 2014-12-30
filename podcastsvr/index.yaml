@@ -38,3 +38,9 @@ indexes:
   properties:
   - name: seq
     direction: desc
+
+- kind: Episode
+  ancestor: yes
+  properties:
+  - name: seq
+    direction: desc

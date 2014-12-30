@@ -14,8 +14,8 @@ import base64
 import codecs
 from random import randint
 
-_server_ = 'http://localhost:9080'
-# _server_ = 'http://xcv1173.appspot.com/'
+# _server_ = 'http://127.0.0.1:9080'
+_server_ = 'http://inspired-muse-794.appspot.com/'
 
 def get_data_from_url(url):
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
@@ -57,7 +57,7 @@ def parse_category(content):
     reponse = f.read()
     f.close()    
 
-def parse_channel(content):
+def parse_channel(category_seq, content):
     # print content
     url = _server_+'/channel/add'
     thumbs = re.findall(r'(?<=<div class="thumb"><img src=")[\w\:\/\.\d]+', content, re.I|re.M)
@@ -69,16 +69,50 @@ def parse_channel(content):
     if thumbs and titles and urls and len(thumbs) == len(titles) and len(thumbs) == len(urls):
         for i, d in enumerate(titles):
             try:
-                print thumbs[i] + '---' + titles[i] + '----' + urls[i]
-                newarr.append({'seq':int(urls[i].split('/')[2]), 'title':titles[i], 'thumb':thumbs[i], 'desc':titles[i], 'category_seq':'1', 'like':3, 'hate':0})
+                # print thumbs[i] + '---' + titles[i] + '----' + urls[i]
+                # if int(urls[i].split('/')[2]) == 7064:
+                    # episodes = get_episode(category_seq, int(urls[i].split('/')[2]))
+                newarr.append({'seq':int(urls[i].split('/')[2]), 'title':titles[i], 'thumb':thumbs[i], 'desc':titles[i], 'category_seq':str(category_seq), 'like':3, 'hate':0})
             except IndexError:
                 pass
-    # print newarr
+    print newarr
     req = urllib2.Request(url)
     req.add_header('Content-Type', 'application/json')
     f = urllib2.urlopen(req,json.dumps(newarr))
     response = f.read()
     f.close()
+
+def parse_epi_url(url):
+    content = get_data_from_url('http://m.podbbang.com'+url);
+    # print content
+    url = re.findall(r'<div class="btn-play"><a href="[\.\w\d\/\:]*"><span>', content, re.M|re.I)
+    for u in url:
+        # print u
+        return u.replace('<div class="btn-play"><a href="','').replace('"><span>','')
+
+def parse_episode(category_seq, channel_seq, content):
+    # print content
+    surl = _server_+'/episode/add'
+    seq = re.findall(r'<dd>&nbsp;(.+).</dd>', content, re.M|re.I)
+    title = re.findall(r'<dd class="tit">(.+)</dd>', content, re.M|re.I)
+    url = re.findall(r'<a class="view" href="(.+)">', content, re.M|re.I)
+    date = re.findall(r'<dd class="date">(.+)</dd>', content, re.M|re.I)
+
+    newarr = []
+    for s,t,u,d in zip(seq, title, url, date):
+        try:
+            # print s + '-' + t + '-' + u + '-' + d
+            newarr.append({'category_seq':category_seq,'channel_seq':channel_seq, 'seq':int(s), 'title':t, 'url':parse_epi_url(u),'duration':0,'type':'a', 'date':d, 'like':1, 'hate':1})
+        except IndexError:
+            pass
+    print newarr
+    req = urllib2.Request(surl)
+    req.add_header('Content-Type', 'application/json')
+    f = urllib2.urlopen(req,json.dumps({'channel_seq':channel_seq, 'category_seq':category_seq, 'data':newarr}))
+    response = f.read()
+    f.close()
+    # return json.dumps({'channel_seq':4362, 'category_seq':1, 'data':newarr})
+    # return newarr
 
 def uprank_channel(content):
     # print content
@@ -109,11 +143,42 @@ def list_category():
     req.add_header('Content-Type', 'application/json')
     f = urllib2.urlopen(req)
     response = f.read()
-    print response
+    # print response
     f.close()
+    return response
 
 def rank_channel():
-    url = _server_+'/channel/list' + '?rank=rnk20'
+    url = _server_+'/channel/rank' + '?rank=rnk20'
+    req = urllib2.Request(url)
+    req.add_header('Content-Type', 'application/json')
+    f = urllib2.urlopen(req)
+    response = f.read()    
+    f.close()
+    return response
+
+def list_channel(category_seq):
+    url = _server_+'/channel/list' + '?category_seq='+str(category_seq)
+    print url
+    req = urllib2.Request(url)
+    req.add_header('Content-Type', 'application/json')
+    f = urllib2.urlopen(req)
+    response = f.read()
+    print response
+    f.close()
+    return response
+
+def parse_episode_with_channel(category_seq, channel_seq):
+    print 'get_episode... start ' + str(channel_seq)
+    nnn = []
+    for n in range(1,1000):
+        sss = get_data_from_url('http://m.podbbang.com/ch/lists/%d/%d'%(channel_seq, n))
+        if len(sss) > 38:
+            parse_episode(category_seq, channel_seq, sss)
+        else:
+            break
+
+def get_episode(channel_seq):
+    url = _server_+'/episode/list' + '?channel_seq=' + str(channel_seq)
     req = urllib2.Request(url)
     req.add_header('Content-Type', 'application/json')
     f = urllib2.urlopen(req)
@@ -121,19 +186,33 @@ def rank_channel():
     print response
     f.close()
 
-def cate_channel():
-    url = _server_+'/channel/cate' + '?category_seq=1'
-    req = urllib2.Request(url)
-    req.add_header('Content-Type', 'application/json')
-    f = urllib2.urlopen(req)
-    response = f.read()
-    print response
-    f.close()
+def makechannel():
+    cates = list_category()
+    print cates
+    for cate in json.loads(cates):
+        print cate['seq']
+        parse_channel(cate['seq'], get_data_from_url('http://m.podbbang.com/category/lists/0/' + str(cate['seq']) ))
+
+def makeepisode(category_seq):
+    chs = list_channel(category_seq)
+    print chs
+    for ch in json.loads(chs):
+        print 'category_seq is %s and channel_seq is %s' %(ch['category_seq'], ch['seq'])        
+        parse_episode_with_channel(ch['category_seq'], ch['seq'])
 
 if __name__ == '__main__':
     # parse_category(get_data_from_url('http://m.podbbang.com/category'))
-    # parse_channel(get_data_from_url('http://m.podbbang.com/category/lists/0/1'))
+    # parse_channel(1, get_data_from_url('http://m.podbbang.com/category/lists/0/1'))
+    # parse_episode(get_data_from_url('http://m.podbbang.com/ch/lists/4362/1'))
     # uprank_channel(get_data_from_url('http://m.podbbang.com/category/lists/0/1'))
-    # list_category()
-    # rank_channel()
-    cate_channel()
+    # print rank_channel()
+    # list_channel(1)
+    # parse_episode_with_channel(1, 4362)
+    get_episode(4362)
+    # print parse_epi_url('/ch/episode/4362?e=21180210')
+    # makechannel()
+    # # makeepisode(1)
+    # print list_category()
+
+
+
