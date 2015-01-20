@@ -14,8 +14,8 @@ import base64
 import codecs
 from random import randint
 
-# _server_ = 'http://127.0.0.1:9080'
-_server_ = 'http://inspired-muse-794.appspot.com/'
+_server_ = 'http://127.0.0.1:9080'
+# _server_ = 'http://inspired-muse-794.appspot.com/'
 
 def get_data_from_url(url):
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
@@ -28,7 +28,7 @@ def get_data_from_url(url):
     ]
     try:
         res = opener.open(url)
-        # print res.info().get('Content-Encoding')
+        print res.info().get('Content-Encoding')
         if res.info().get('Content-Encoding') == 'gzip':
             buf = StringIO( res.read() )
             f = gzip.GzipFile(fileobj=buf)
@@ -170,7 +170,7 @@ def list_channel(category_seq):
 def parse_episode_with_channel(category_seq, channel_seq):
     print 'get_episode... start ' + str(channel_seq)
     nnn = []
-    for n in range(1,1000):
+    for n in range(1,100):
         sss = get_data_from_url('http://m.podbbang.com/ch/lists/%d/%d'%(channel_seq, n))
         if len(sss) > 38:
             parse_episode(category_seq, channel_seq, sss)
@@ -190,8 +190,9 @@ def makechannel():
     cates = list_category()
     print cates
     for cate in json.loads(cates):
-        print cate['seq']
-        parse_channel(cate['seq'], get_data_from_url('http://m.podbbang.com/category/lists/0/' + str(cate['seq']) ))
+        print cate['seq'] 
+        for i in range(1, 20):
+            parse_channel(cate['seq'], get_data_from_url('http://m.podbbang.com/category/lists/'+str(i)+'/' + str(cate['seq']) ))
 
 def makeepisode(category_seq):
     chs = list_channel(category_seq)
@@ -208,10 +209,12 @@ if __name__ == '__main__':
     # print rank_channel()
     # list_channel(1)
     # parse_episode_with_channel(1, 4362)
-    get_episode(4362)
+    # get_episode(4362)
     # print parse_epi_url('/ch/episode/4362?e=21180210')
     # makechannel()
-    # # makeepisode(1)
+    # for i in range(0,4):
+    #     makeepisode(i)
+    makeepisode(2)
     # print list_category()
 
 
