@@ -8,6 +8,7 @@ import sys, time
 from datetime import datetime
 import re
 import urllib
+from urllib import quote_plus
 import urllib2
 import json
 import gzip
@@ -21,6 +22,11 @@ import jinja2
 
 from random import randint
 from google.appengine.api import memcache
+import xml.etree.ElementTree as ET
+
+import sys
+reload(sys); 
+sys.setdefaultencoding('utf-8')
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
@@ -49,6 +55,7 @@ class Category(ndb.Model):
         return cls.query(ancestor=ancestor_key).order(cls.order)
 
 class Episode(ndb.Model):
+    channel_seq = ndb.IntegerProperty(indexed=True)
     seq = ndb.IntegerProperty(indexed=True)
     name = ndb.StringProperty(indexed=True)
     type = ndb.StringProperty()
@@ -61,7 +68,18 @@ class Episode(ndb.Model):
     @classmethod
     def query_episode(cls, ancestor_key):
         return cls.query(ancestor=ancestor_key).order(-cls.seq)
+
+class Episodenews(ndb.Model):
+    channel_seq = ndb.IntegerProperty(indexed=True)
+    episode_seq = ndb.IntegerProperty(indexed=True)
+    url = ndb.StringProperty(indexed=True)
+    name = ndb.StringProperty(indexed=True)
+
+    @classmethod
+    def query_news(cls, ancestor_key):
+        return cls.query(ancestor=ancestor_key).order(-cls.name)
     
+
 class Channel(ndb.Model):
     seq = ndb.IntegerProperty(indexed=True)
     name = ndb.StringProperty(indexed=True)
@@ -180,6 +198,7 @@ class UpRank(webapp2.RequestHandler):
                 ch.rnkwom = ch.rnkwom+1 if 'rnkwom' in d and d['rnkwom'] is not None else ch.rnkwom
                 ch.put()
 
+
 class AddEpisode(webapp2.RequestHandler):
     def post(self):
         content = self.request.body
@@ -193,6 +212,7 @@ class AddEpisode(webapp2.RequestHandler):
             epi = Episode.query_episode(ep_key).get()
             if epi is None:
                 epi = Episode(parent=ep_key
+                    ,channel_seq = data['channel_seq']
                     ,seq = d['seq']
                     ,name = d['title']
                     ,type = d['type']
@@ -356,20 +376,133 @@ class listEpisode(webapp2.RequestHandler):
         print datas
         self.response.out.write(datas)
 
+replarr = ['(','\'','"',')','-','의 ','가 ','에 ','에게 ','이 ','한수진','월 ','수 ','화 ','목 ','금 ','토 ','일 ']
+
+class listEpisodenews(webapp2.RequestHandler):
+    def get(self):
+        print 'listEpisodenews : ' + self.request.get('channel_seq') + ':' +self.request.get('episode_seq')
+        epi_key = ndb.Key('Channel', str(self.request.get('channel_seq')), 'Episode', str(self.request.get('episode_seq')))
+        isEdpisode = Episodenews.query_news(epi_key).fetch(5)
+        print isEdpisode
+        if isEdpisode is not None and len(isEdpisode) > 0:
+            print 'isEdpisode is existed'
+        else:
+            print 'isEdpisode is not existed'
+            epi = Episode.query_episode(epi_key).get()
+
+            q_str = epi.name
+            for r in replarr:
+                q_str = q_str.replace(r.encode('utf-8'),'')
+            # params = urllib.urlencode({'query': q_str, 'key': 'ed1f032ec31aeb75b99fc4d12f3aeeff', 'target': 'news', 'display':10,'start':1})
+            # url = 'http://openapi.naver.com/search?%s' % params
+            url = "http://openapi.naver.com/search?key=ed1f032ec31aeb75b99fc4d12f3aeeff&start=1&display=10&target=news&query="+quote_plus(q_str.encode('utf-8'), safe=':/')
+            # print url
+            f = urllib.urlopen(url)
+            # try:
+            cont = f.read()
+            print cont
+            root = ET.fromstring(cont)
+            # print root.findall('item')
+            for item in root.iter('item'):
+                if item:
+                    print item.find('title').text
+                    news = Episodenews(parent=epi_key
+                        , channel_seq  = int(self.request.get('channel_seq'))
+                        , episode_seq  = int(self.request.get('episode_seq'))
+                        , url = item.find('originallink').text
+                        , name = item.find('title').text.replace('&quot;','')
+                        )
+                    news.put()
+            # except:
+            #     print 'parsed error'
+        datas = json.dumps([p.to_dict() for p in Episodenews.query_news(epi_key).fetch()] , default=default)                
+        print datas
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(datas)
+
+
+
+class deleteChannel(webapp2.RequestHandler):
+    def get(self):
+        print 'deleteChannel : '
+        ndb.delete_multi(Channel.query().fetch(keys_only=True))
+
+class deleteEpisode(webapp2.RequestHandler):
+    def get(self):
+        print 'deleteEpisode : '
+        ndb.delete_multi(Episode.query().fetch(10000, keys_only=True))
+
+class deleteEpisodenews(webapp2.RequestHandler):
+    def get(self):
+        print 'deleteEpisodenews : '
+        ndb.delete_multi(Episodenews.query().fetch(10000, keys_only=True))
+
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
 
+class HomeHandler(webapp2.RequestHandler):
+    def get(self):
+        # self.response.write('HomeHandler begin!')
+        sex = self.request.get('sex')
+        # year = self.request.get('year')
+        # dow = self.request.get('dow')
+        sexdd = memcache.get('ch_rank_' + sex)
+        res = {}
+        if sexdd is not None:
+            print 'rankChannel memcache'
+            res['sexdd'] = sexdd
+        else:
+            ch_key = ndb.Key('Channel', 'all')
+            channels = Channel.query_by_rnk(ch_key, 'rnk'+sex).fetch(500)
+            sexdd = json.dumps([p.to_dict() for p in channels],default=default)
+            if not memcache.set_multi({sex:sexdd}, key_prefix='ch_rank', time=3600*24):
+                res['sexdd'] = sexdd
+
+        year = self.request.get('year')
+        yeardd = memcache.get('ch_rank_' + year)
+        res = {}
+        if yeardd is not None:
+            print 'rankChannel memcache'
+            res['yeardd'] = yeardd
+        else:
+            ch_key = ndb.Key('Channel', 'all')
+            channels = Channel.query_by_rnk(ch_key, 'rnk'+year).fetch(500)
+            yeardd = json.dumps([p.to_dict() for p in channels],default=default)
+            if not memcache.set_multi({year:yeardd}, key_prefix='ch_rank', time=3600*24):
+                res['sexdd'] = sexdd
+
+        dow = self.request.get('dow')        
+        dowdd = memcache.get('ch_rank_' + dow)
+        res = {}
+        if dowdd is not None:
+            print 'rankChannel memcache'
+            res['dowdd'] = dowdd
+        else:
+            ch_key = ndb.Key('Channel', 'all')
+            channels = Channel.query_by_rnk(ch_key, 'rnk'+dow).fetch(500)
+            dowdd = json.dumps([p.to_dict() for p in channels],default=default)
+            if not memcache.set_multi({dow:dowdd}, key_prefix='ch_rank', time=3600*24):
+                res['dowdd'] = dowdd
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(res)
+
 app = webapp2.WSGIApplication([
     
     ('/channel/uprank', UpRank),   # get Movie from url q 
     ('/channel/add', AddChannel),   # get Movie from url q 
+    # ('/channel/del', deleteChannel),   # get Movie from url q 
+    # ('/episode/del', deleteEpisode),   # get Movie from url q 
+    ('/episode/news/list', listEpisodenews),   # get Movie from url q 
+    ('/episode/news/del', deleteEpisodenews),   # get Movie from url q 
     ('/episode/add', AddEpisode),   # get Movie from url q 
     ('/category/add', AddCategory),   # get Movie from url q 
     ('/category/list', listCategory),   # get Movie from url q 
     ('/channel/rank', rankChannel),   # get Movie from url q 
     ('/channel/list', listChannel),   # get Movie from url q 
     ('/episode/list', listEpisode),   # get Movie from url q 
+
+    ('/home', HomeHandler),   # get Movie from url q 
 
 ], debug=True)

@@ -36,6 +36,90 @@ indexes:
 - kind: Channel
   ancestor: yes
   properties:
+  - name: rnk30
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk40
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk50
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk60
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnk70
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkfri
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkman
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkmon
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnksat
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnksun
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkthu
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnktue
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkwed
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
+  - name: rnkwom
+    direction: desc
+
+- kind: Channel
+  ancestor: yes
+  properties:
   - name: seq
     direction: desc
 
@@ -43,4 +127,10 @@ indexes:
   ancestor: yes
   properties:
   - name: seq
+    direction: desc
+
+- kind: Episodenews
+  ancestor: yes
+  properties:
+  - name: name
     direction: desc
