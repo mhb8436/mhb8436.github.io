@@ -17,7 +17,7 @@ def main():
 	# print book.nsheets
 	# print book.sheet_names()
 	firstsheet = book.sheet_by_index(0)
-	fs =  firstsheet.row_values(1)
+	# fs =  firstsheet.row_values(1)
 	num_rows = firstsheet.nrows - 1
 	cur_row = 0
 	while cur_row < num_rows:
