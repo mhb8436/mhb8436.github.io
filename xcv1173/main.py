@@ -11,6 +11,9 @@ import gzip
 from StringIO import StringIO
 import base64
 import codecs
+from operator import itemgetter
+from itertools import groupby
+
 
 from google.appengine.ext import ndb
 from google.appengine.api import users
@@ -54,6 +57,7 @@ class MovieTitle(ndb.Model):
   name = ndb.StringProperty(indexed=True)
   image = ndb.StringProperty()
   rank = ndb.IntegerProperty()
+  category = ndb.StringProperty()
 
   @classmethod
   def query_movie(cls, ancestor_key):
@@ -73,11 +77,15 @@ class KidsMovie(ndb.Model):
 def read_videopage_url(url):
   google_res = urllib2.urlopen(url)
   content = google_res.read()
-  dataus = re.findall(r'<div class="[a-zA-Z0-9\_\s\-]*" data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
+  dataus = re.findall(r'data-u="[a-zA-Z0-9\=]*"', content, re.M|re.I)
   iframedt = re.search(r'<iframe [\d\w\=\"\ ]+ src="[\/\w\d]+"', content, re.M|re.I)
   b = re.search(r'<div b=".*" id="jkr"', content, re.M|re.I)
 
   result = [] 
+  # print '-----------------'
+  # print str(dataus)
+  # print str(iframedt)
+  # print '-----------------'
   if dataus:
     for i, d in enumerate(dataus):
       try:
@@ -88,7 +96,7 @@ def read_videopage_url(url):
     http_url = re.search(r'http://[a-zA-Z\.]+\/', url, re.M|re.I)
     http_uri = re.search(r'src="[\d\w\/]+"', iframedt.group(), re.M|re.I)
     http_uri = http_uri.group().replace('src=','').replace('"','')
-    print http_url.group()+'/'+http_uri
+    # print http_url.group()+'/'+http_uri
     google_res = urllib2.urlopen(http_url.group()+'/'+http_uri)
     content = google_res.read()
     idataus = re.findall(r'<source[\ \"\d\w\s]e-src="[a-zA-Z0-9\=]*"', content, re.M|re.I)
@@ -96,7 +104,7 @@ def read_videopage_url(url):
     # print idataus
     for i, d in enumerate(idataus):
       try:
-        print 
+        # print d
         result.append({'url':decodeUrl(extattr(b.group()), extattr(idataus[i])) })
       except IndexError:
         pass
@@ -166,7 +174,7 @@ def read_searchresult_url(q, url):
 
   google_res = urllib2.urlopen(url)
   content = google_res.read()
-  contents = re.search(r'미드(.*)</h5>(.*)', content, re.M|re.I)
+  contents = re.search(r'한국(.*)</h5>(.*)', content, re.M|re.I)
   ## print contents 
 
   more = re.search(r'href="/finder(.*)">영상 목록 검색 결과 더보기',content, re.M|re.I)
@@ -280,13 +288,14 @@ def nhnUrl():
             parent=ndb.Key("MovieTitle", "TitleList"),
             name= name,
             image=istr,
-            rank=rk
+            rank=rk,
+            category=''
             )
           movie_title.put()   
 
 
 def nhnImgUrl(q):
-  q = q + ' 미드'
+  q = q + ' 한국'
   url = 'http://image.search.naver.com/search.naver?where=image&sm=tab_jum&ie=utf8&query=' + urllib.quote(q)
   opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
   urllib2.install_opener(opener)
@@ -321,13 +330,15 @@ def nhnImgUrl(q):
 def new_fetch_movies(q):
   print 'begin new_fetch_movies ... ' + q.encode('utf-8')
 
-  result = read_searchresult_url(q, 'http://searchpang.com/finder?q='+urllib.quote(q.encode('utf-8'))+'&search_tags%5B%5D='+urllib.quote("미드") +'&category=list')
+  result = read_searchresult_url(q, 'http://searchpang.com/finder?q='+urllib.quote(q.encode('utf-8'))+'&search_tags%5B%5D='+urllib.quote("한국") +'&category=list')
   # print result
   isMovie = True
+  if result is None:
+    return
   for r in result: # movie items
     r['items'] = read_listresult_url(q, r['url'], 1, 1)
     # print ' before -------------->' + q.encode('utf-8') + '___' + r['url']
-    print 'new_fetch_movies url is '  + r['url'] + '^_____^' + r['name'].encode('utf-8') + '~~~~' + str(r['items'])
+    # print 'new_fetch_movies url is '  + r['url'] + '^_____^' + r['name'].encode('utf-8') + '~~~~' + str(r['items'])
     if r is not None and r['items'] is not None:
       for s in r['items']: # item player  
         isMovie = False
@@ -377,9 +388,9 @@ def new_fetch_movies(q):
         image=r['image'],
         items=item_s
         )
-      print 'movie->' + r['name'].encode('utf-8','ignore')   
+      # print 'movie->' + r['name'].encode('utf-8','ignore')   
       movie.put()
-      print str(movie)
+      # print str(movie)
 
 def delete_movies(q):
   # print 'def delete_movies(q): ' + q
@@ -463,7 +474,8 @@ class Ewdfosid21Page(webapp2.RequestHandler):
             parent=ndb.Key("MovieTitle", "TitleList"),
             name=q.encode('utf-8'),
             image=img_url,
-            rank=rank
+            rank=rank,
+            category=''
             )
       movie_title.put()
       
@@ -515,21 +527,48 @@ class Ewdfosid67Page(webapp2.RequestHandler):
 class Ewdfosid93Page(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
-    img_url = nhnImgUrl(q.encode('utf-8'))
-    movie_title = MovieTitle(
-            parent=ndb.Key("MovieTitle", "TitleList"),
-            name=q.encode('utf-8'),
-            image=img_url,
-            rank=0
-            )
-    movie_title.put()
-    # mm = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch(1)
-    ## print mm
-    # aaa = [ m.key.delete() for m in mm if m]
-    ## print aaa
-    ancestor_key = ndb.Key("MovieTitle", "TitleList")
-    # self.response.headers['Content-Type'] = 'application/json'
-    # self.response.out.write(json.dumps([p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]))
+    if len(q) < 1:
+      return
+    t_key = ndb.Key("MovieTitle", "TitleList", "Title", q.encode('utf-8','ignore') or '*not*')
+    ctitle = MovieTitle.query_movie(t_key).fetch(1)
+    # print ctitle
+    if ctitle is None or len(ctitle) < 1:
+      img_url = nhnImgUrl(q.encode('utf-8'))
+      movie_title = MovieTitle(
+              parent=t_key,
+              name=q.encode('utf-8'),
+              image=img_url,
+              rank=0,
+              category=''
+              )
+      movie_title.put()
+
+class Ewdfosid94Page(webapp2.RequestHandler):
+  def get(self):
+    q = self.request.get('q')
+    c = self.request.get('c')
+    if len(q) < 1:
+      return
+    t_key = ndb.Key("MovieTitle", "TitleList", "Title", q.encode('utf-8','ignore') or '*not*')
+    ctitle = MovieTitle.query_movie(t_key).fetch(1)
+    # print ctitle
+    if ctitle is None or len(ctitle) < 1:
+      img_url = nhnImgUrl(q.encode('utf-8'))
+      movie_title = MovieTitle(
+              parent=t_key,
+              name=q.encode('utf-8'),
+              image=img_url,
+              rank=0,
+              category=c.encode('utf-8')
+              )
+      movie_title.put()
+    else:
+      for ct in ctitle:
+        ct.category = c.encode('utf-8')
+        ct.put()
+
+    
+
 
 
 class Durtka18Page(webapp2.RequestHandler):
@@ -538,14 +577,15 @@ class Durtka18Page(webapp2.RequestHandler):
     print 'statt Durtka18Page ' + q.encode('utf-8')
     if q:
       movielst = MovieTitle.query(MovieTitle.name == q.encode('utf-8')).fetch()
+      print movielst
     else:  
       ancestor_key = ndb.Key("MovieTitle", "TitleList")
       movielst = MovieTitle.query_movie(ancestor_key).fetch()
 
-    print movielst
+    # print movielst
     for p in movielst:
       dd =  p.to_dict()
-      print dd['name'].encode('utf-8')
+      # print dd['name'].encode('utf-8')
       new_fetch_movies(dd['name'])
       ancestor_key = ndb.Key("Movie", dd['name'].encode('utf-8') or "*notitle*")
       self.response.headers['Content-Type'] = 'application/json'
@@ -559,7 +599,7 @@ class Durtka18PageHandler(webapp2.RequestHandler):
   def get(self):
     q = self.request.get('q')
     print 'Durtka18PageHandler'
-    # taskqueue.add(url='/tasks/durtka18', params={'q': q})
+    taskqueue.add(url='/tasks/durtka18', params={'q': q})
 
   
 class Ewdfosid71Page(webapp2.RequestHandler):
@@ -582,6 +622,36 @@ class Ewdfosid71Page(webapp2.RequestHandler):
         #              key_prefix="weather_", time=3600)
         print 'Memcache set fail of MovieTitle'
         self.response.out.write(datas)
+
+class Ewdfosid72Page(webapp2.RequestHandler):
+  def get(self):
+    datas = memcache.get('%s_TitleListCate' % "movietitle")
+    self.response.headers['Content-Type'] = 'application/json'
+    # print 'Ewdfosid72Page==>'
+    # print datas
+    if datas is not None and len(datas) > 2:
+      # logging.info( 'in memcache #####>' + str(datas) )
+      self.response.out.write(datas)
+    else:
+      # logging.info( 'in datastore #####>' + str(datas) )
+      ancestor_key = ndb.Key("MovieTitle", "TitleList")
+      groups = []
+      rawdatas = [p.to_dict() for p in MovieTitle.query_movie(ancestor_key).fetch()]
+      sorted_rawdatas = sorted(rawdatas, key=itemgetter('category'))
+      # print sorted_rawdatas
+      sgroups = groupby(sorted_rawdatas, key=itemgetter('category'))
+      # for k, g in groupby(rawdatas, lambda x:x['category']):
+      # for k, g in groupby(rawdatas, itemgetter('category')):
+        # groups.append({'category':k, 'value':list(g)})
+      # print sgroups
+      groups = [{'category':k, 'values':[{'name':x['name'],'image':x['image'],'rank':x['rank']} for x in v]} for k, v in sgroups if len(k)>1]
+      datas = json.dumps(groups)  
+      print datas
+      kkk = 'TitleListCate'
+      if not memcache.set_multi({kkk:datas}, key_prefix='movietitle_', time=3600*24*7):
+        print 'Memcache set fail of MovieTitle'
+        self.response.out.write(datas)
+
       
 class Eftfsog34Page(webapp2.RequestHandler):
   def get(self):
@@ -663,8 +733,10 @@ app = webapp2.WSGIApplication([
     ('/ewdfosid62', Ewdfosid62Page), # delete movie title from url q
     ('/ewdfosid67', Ewdfosid67Page), # delete movie from url q
     ('/ewdfosid93', Ewdfosid93Page), # add movie title from url q
+    ('/ewdfosid94', Ewdfosid94Page), # category update of movie title from q and c 
     
     ('/ewdfosid71', Ewdfosid71Page), # get movietitle
+    ('/ewdfosid72', Ewdfosid72Page), # get movietitle group by category 
     # ('/tasks/werisdfls', Werisdfls51Page), # fetch MovieTitle from naver 
     ('/tasks/durtka18', Durtka18Page), # fetch Movie from MovieTitle 
     ('/tasks/durtka18handler', Durtka18PageHandler), # fetch Movie from MovieTitle 
