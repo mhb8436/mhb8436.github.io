@@ -1,1 +1,8 @@
 cron:
+# - description: daily channel job
+#   url: /tasks/durtka18
+#   schedule: every monday 01:00
+#   timezone: Australia/NSW
+# - description: daily episode job
+#   url: /tasks/episode
+#   schedule: every day 02:20
