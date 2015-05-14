@@ -17,7 +17,7 @@ import xlrd
 
 if __name__ == '__main__':
 	url = "http://rt.molit.go.kr/rtFile.do?cmd=fileDownload"
-	for i in range(210,211):		
+	for i in range(210,211):
 		try:
 			values = {'seq_no':i, 'file_seq_no':1}
 			data = urllib.urlencode(values)
