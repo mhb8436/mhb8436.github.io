@@ -13,28 +13,17 @@ import datetime
 import xlrd
 
 def main():
-	book = xlrd.open_workbook('APT_142.xls')
-	# print book.nsheets
-	# print book.sheet_names()
+	fname = '201106_APT_210.xls'
+	book = xlrd.open_workbook(fname)
 	firstsheet = book.sheet_by_index(0)
-	# fs =  firstsheet.row_values(1)
 	num_rows = firstsheet.nrows - 1
 	cur_row = 0
 	while cur_row < num_rows:
 		cur_row += 1
 		row = firstsheet.row_values(cur_row)
-		insert('201201', row)
+		insert(fname.split('_')[0], row)
 	conn.commit()	
-	select('201201')	
-	# print fs 	
-	# insert('201201', fs)
-	# select('201201')
-	# for f in fs:
-	# 	# print f.encode('utf-8')		
-	# 	try:
-	# 		print f.encode('utf-8')
-	# 	except:
-	# 		print f
+	select(fname.split('_')[0])	
 
 def select(cym):
 	selsql = "select * from real_estate where cym = '"+cym+"'"
@@ -85,7 +74,19 @@ if __name__ == '__main__':
        stname text
        );''')
 
+	conn.execute('''CREATE TABLE  IF NOT EXISTS real_estate_addr
+       ( id INTEGER PRIMARY KEY   AUTOINCREMENT,
+       state text     NOT NULL,
+       mainno           INT    NOT NULL,
+       subno           INT     NOT NULL,
+       apt        CHAR(100) NOT NULL,
+       lat REAL,
+       lng REAL 
+       );''')
+
 	main()
+# select distinct state||' '||mainno||' '||subno||' '||apt, state, mainno, subno, apt from real_estate e, 
+
 
 # 시군구 state
 # 본번 mainno

@@ -38,7 +38,7 @@ def insert(cym, p):
 	# print p
 	chkvalue = 0
 	countsql = "SELECT count(id)  from real_estate where cym = '"+cym+"' and  state='"+p[0]+"' and  mainno="+str(int(p[1]))+"  \
-		and subno="+str(int(p[2]))+" and apt='"+p[3]+"' and area="+str(int(p[4]))+" and stair='"+p[6]+"'"
+		and subno="+str(int(p[2]))+" and apt='"+p[3]+"' and area="+str(int(p[4]))+" and stair='"+p[6].replace(',','')+"'"
 	cur = conn.cursor()
 	# print countsql.encode('utf-8')
 	try:
@@ -46,23 +46,26 @@ def insert(cym, p):
 		rows = cur.fetchall()
 		for row in rows:
 			chkvalue = row[0]
-	except:
-		print countsql
+	except Exception as err:
+		print 'select query is %s and err is %s'%(countsql.encode('utf-8'), err)
 	print chkvalue	
+	conn.commit()
 	if chkvalue == 0:	
-		inssql = "INSERT INTO real_estate (cym, state,mainno,subno, apt ,area, tamount, cdate, stair, birth, stname) \
-		    VALUES ('"+cym+"', '"+p[0]+"',"+str(int(p[1]))+","+str(int(p[2]))+", '"+p[3]+"' ,"+str(float(p[4]))+", '"+p[5]+"', '"+p[6]+"', "+str(int(p[7]))+", "+str(int(p[8]))+", '"+p[9]+"')"
+		inssql = "INSERT INTO real_estate (cym, state,mainno,subno, apt ,area,  cdate, tamount, stair, birth, stname) \
+		    VALUES ('"+cym+"', '"+p[0]+"',"+str(int(p[1]))+","+str(int(p[2]))+", '"+p[3]+"' ,"+str(float(p[4]))+", '"+p[5]+"', '"+p[6].replace(',','')+"', "+str(int(p[7]))+", "+str(int(p[8]))+", '"+p[9]+"')"
 		# print inssql.encode('utf-8')
 		try:
 			# cur = conn.cursor()
 			cur.execute(inssql)
 			# conn.commit()
 		except Exception as err:
-			print err
+			print 'insert err %s'%err
+			# print err
 	
 if __name__ == '__main__':
 	# try:
 	conn = psycopg2.connect("dbname='testdb' user='daebak' host='localhost' password='1q2w3e4r'")
+	conn.autocommit=True
 	# except:
 	# 	print "Error while open database"	
 	# conn=sqlite3.connect('bb.db')
@@ -84,7 +87,7 @@ if __name__ == '__main__':
        birth int ,
        stname text
        );''')
-
+	# conn.commit()
 	main()
 
 # 시군구 state
