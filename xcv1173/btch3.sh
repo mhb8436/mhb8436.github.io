@@ -1,1 +1,0 @@
-python btch2.py
