@@ -1,0 +1,31 @@
+application: ronthemap
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: /favicon\.ico
+  static_files: favicon.ico
+  upload: favicon\.ico
+
+- url: /100s\.txt
+  static_files: 100s.txt
+  upload: 100s\.txt
+
+- url: /358s\.txt
+  static_files: 358s.txt
+  upload: 358s\.txt
+
+- url: /assets
+  static_dir: assets
+
+- url: .*
+  script: main.app
+
+libraries:
+- name: webapp2
+  version: latest
+
+- name: jinja2
+  version: latest

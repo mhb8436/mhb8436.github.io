@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<!-- leaflet and daum -->
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet-src.js"></script>
+<script src="assets/proj4-compressed.js"></script>
+<script src="assets/proj4leaflet.js"></script>
+<script src="assets/Leaflet.KoreanTmsProviders.js"></script>
+<!-- leaflet and daum -->
+<title>관광공사/지적공사 맛집 지도에서 보기</title>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-heat/v0.1.3/leaflet-heat.js'></script>
+<script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.5/cosmo/bootstrap.min.css">
+<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+<style>
+  body {padding-top: 70px;}
+  .map { top:0; bottom:0; width:100%; height:700px;}
+  .panel-body {text-align: center;}
+  .container-full {margin: 0 auto;width: 100%;}
+  .edit-input {
+    display:none;
+  }
+  .edit-input-text {
+    display:none;
+    background-color: transparent;
+    /*background-color: #ffffff;*/
+    color:#ccc;
+    border: none;
+    border-color: transparent;
+  }
+  .the-table {
+    table-layout: fixed;
+    word-wrap: break-word;
+  }
+</style>
+</head>
+
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">지도 위의 맛집</a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+				
+        <!-- <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">지역<span class="caret"></span>    <span id="curArea" style="color:#ffffff;font-weight:bold"></span></a>
+          <ul class="dropdown-menu" role="menu" id="areas">
+            
+          </ul>
+        </li> -->
+
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true"> 선정한 곳 <span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="#" onclick="paint('100','관광공사 100대 맛집')">관광공사 100대 맛집</a></li>
+            <li class="divider"></li>
+            <li><a href="#" onclick="paint('358','지적공사 맛집')">지적공사 맛집</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-full">
+
+
+  <div class="row">
+    <div class="col-md-10">
+       <div class="panel panel-default">
+        <div class="panel-heading">
+           <i class="fa fa-cutlery"></i>&nbsp; <span id="whoare"></span> 지도
+        </div>
+        <div class="panel-body">
+          <div id='cmap' class='map'></div>
+        </div>
+       </div> 
+    </div>
+    <div class="col-md-2">
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- ethansnew_sidebar-right-1_AdSense1_160x600_as -->
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:160px;height:600px"
+           data-ad-client="ca-pub-8638613247413657"
+           data-ad-slot="4807761728"></ins>
+      <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  </div>
+
+</div>	
+</body>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<script>
+
+var cmap = L.map('cmap', {
+            crs: L.Proj.CRS.TMS.Daum,
+            continuousWorld: true,
+            worldCopyJump: false,
+            zoomControl: true
+          }).setView([37.49800253054263,127.02608766689583], 4);
+
+var baseLayers1 = {
+  '<h6>Street</h6>': L.Proj.TileLayer.TMS.provider('DaumMap.Street').addTo(cmap),
+  '<h6>Satellite</h6>' : L.Proj.TileLayer.TMS.provider('DaumMap.Satellite')
+};
+
+var overlayLayers1 = {
+  '<h6>Hybrid</h6>' : L.Proj.TileLayer.TMS.provider('DaumMap.Hybrid'),
+  // 'Physical Layers' : L.Proj.TileLayer.TMS.provider('DaumMap.Physical')
+};
+L.Proj.TileLayer.TMS.provider('DaumMap.Street').addTo(cmap);
+L.control.layers(baseLayers1, overlayLayers1, {collapsed: false}).addTo(cmap);
+
+var mmkicon = L.icon({
+    iconUrl: 'assets/aa.png',
+    iconSize:  [24, 24]
+});
+
+var markers = [];
+function paint(type, name){
+  $('#whoare').html(name);
+
+  $.getJSON(type+'s.txt',{}).done(function(data){
+    // console.log(data);
+    clearMarker();
+
+    data.forEach(function(d){
+      // console.log(d);
+      var infocontent = '<table class="table table-striped table-hover text-center"><thead style="background-color:#333333;color:#ffffff"><tr><td>이름</td><td>주종목</td><td>주소</td></tr></thead><tbody><tr><td class="success">'+d['name']+'</td><td class="danger">'+d['menu']+'</td><td class="warning">'+d['addr2']+'</td></tr></tbody></table>';
+      var mmm = L.marker([d.lat, d.lng], {icon:mmkicon}).addTo(cmap).bindPopup(infocontent, {'maxWidth':400});
+      markers.push(mmm);
+    });
+
+  });
+}
+
+function clearMarker(){
+  markers.forEach(function(d){
+    cmap.removeLayer(d);
+  });
+}
+  
+paint('100','관광공사 100대 맛집');
+
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-69023005-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</html>
