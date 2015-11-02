@@ -35,11 +35,17 @@ group by state||' '||mainno||' '||subno||' '||apt, cym order by 1,2
 
 3. 거래량(년별, 기간별) - top 100 등 지역별 
 select row_to_json(t) from (
-select state||' '||mainno||' '||subno||' '||apt as ttt, count(1) as cnt 
-from real_estate_apt_buy where cym between '20130101' and '20131201'
-and state like '%서울특별시 양천구%'
-group by state||' '||mainno||' '||subno||' '||apt order by 2 desc
+select x.aptnm, x.ymd, a.lat, a.lng, x.cnt from (
+select b.state||' '||b.mainno||' '||b.subno||' '||b.apt as aptnm, b.cym as ymd, min(b.state) as state, min(b.mainno) as mainno, min(b.subno) as subno, min(apt) as apt, count(1) as cnt 
+from real_estate_apt_buy b 
+where b.cym between '20130101' and '20141201'
+and b.state like '%서울특별시 양천구%'
+group by b.state||' '||b.mainno||' '||b.subno||' '||b.apt, b.cym
+) x left join (select distinct state||' '||mainno||' '||subno||' '||apt, state, mainno,subno,apt,lat,lng from real_estate_addr) a on x.state=a.state and x.mainno=a.mainno and x.subno=a.subno and x.apt=a.apt order by x.ymd, x.cnt desc
 ) t 
+;
+and b.apt like '%디아이빌101동(331-101)%'
+and b.state like '%서울특별시 양천구%'
 
 4. copy_ymd 
 select '20140101'::date + interval '1 month';
