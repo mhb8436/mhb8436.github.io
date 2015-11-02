@@ -4,22 +4,30 @@
 select state||' '||mainno||' '||subno||' '||apt, sum(tamount)/sum(area/3.3) from real_estate_apt_buy where cym='201503' group by state||' '||mainno||' '||subno||' '||apt limit 10;
 
 2. 거래량(기울기)
-select apt, regr_slope(COALESCE(cnt,0), extract(EPOCH from d.ymd::date)) as slope 
-from 
-(select distinct state||' '||mainno||' '||subno||' '||apt, state, mainno,subno,apt 
-from real_estate_apt_buy o, copy_ymd d where d.ymd like '2014%' and apt like '%포레스타1단지%') d left join (
-select state||' '||mainno||' '||subno||' '||apt as apt, cym||'01' as cym, count(1) as cnt 
-from real_estate_apt_buy where cym like '2014%'  
-and apt like '%포레스타1단지%'
+
+
+select a.ttt, regr_slope(COALESCE(b.cnt,0), extract(EPOCH from a.ymd::date))*10^7 as slope  from
+(select  ttt, state, mainno, subno, apt, ymd
+from copy_ymd d left join (select distinct state||' '||mainno||' '||subno||' '||apt as ttt, state, mainno,subno,apt  from real_estate_apt_buy ) o on o.state like '%서울특별시 양천구 목동%'
+where d.ymd between '20140101' and '20140901') a
+left join (
+select state||' '||mainno||' '||subno||' '||apt as ttt, cym||'01' as ymd, count(1) as cnt 
+from real_estate_apt_buy where cym between '20140101' and '20140901'
+and state like '%서울특별시 양천구 목동%'
 group by state||' '||mainno||' '||subno||' '||apt, cym order by 1,2
-) o on d.ymd=cym||'01' and d.ymd like '2014%'
-group by apt order by slope desc
-;
+) b on a.ttt=b.ttt and a.ymd = b.ymd 
+group by a.ttt order by slope desc
 
-
-select  ttt, state, mainno, subno, apt, ymd
-from copy_ymd d left join (select distinct state||' '||mainno||' '||subno||' '||apt as ttt, state, mainno,subno,apt  from real_estate_apt_buy ) o on o.apt like '%포레스타1단지%'
-where d.ymd like '2014%' 
+select a.ttt, a.ymd, coalesce(b.cnt,0) as cnt from 
+(select  ttt, state, mainno, subno, apt, ymd
+from copy_ymd d left join (select distinct state||' '||mainno||' '||subno||' '||apt as ttt, state, mainno,subno,apt  from real_estate_apt_buy ) o on o.apt like '%목동보미리즌빌%'
+where d.ymd between '20140101' and '20140901') a
+left join (
+select state||' '||mainno||' '||subno||' '||apt as ttt, cym||'01' as ymd, count(1) as cnt 
+from real_estate_apt_buy where cym between '20140101' and '20140901'
+and apt like '%목동보미리즌빌%'
+group by state||' '||mainno||' '||subno||' '||apt, cym order by 1,2
+) b on a.ttt=b.ttt and a.ymd = b.ymd 
 
 
 3. 거래량(년별, 기간별) - top 100 등 지역별 
