@@ -16,6 +16,8 @@ module.exports = function(grunt) {
             'vendor/js/heatmap.js',
             'vendor/js/leaflet-heatmap.js',
             'vendor/js/leaflet-provider.js',
+            'vendor/js/hexbin.js',
+            'vendor/js/leaflet-d3.js',
             // 'js/controllers.js',
             // 'js/directives.js',
             // 'js/services.js',
