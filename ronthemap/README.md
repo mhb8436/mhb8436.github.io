@@ -5,7 +5,7 @@ select state||' '||mainno||' '||subno||' '||apt as ttt, sum(tamount)/sum(area/3.
 from real_estate_apt_buy 
 where cym between '20140101' and '20140901'
 group by state||' '||mainno||' '||subno||' '||apt
-order by price desc;
+order by price desc; 
 
 2. 거래량(기울기)
 
