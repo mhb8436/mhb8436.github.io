@@ -1,4 +1,723 @@
+(function() {
+
+d3.hexbin = function() {
+  var width = 1,
+      height = 1,
+      r,
+      x = d3_hexbinX,
+      y = d3_hexbinY,
+      dx,
+      dy;
+
+  function hexbin(points) {
+    var binsById = {};
+
+    points.forEach(function(point, i) {
+      var py = y.call(hexbin, point, i) / dy, pj = Math.round(py),
+          px = x.call(hexbin, point, i) / dx - (pj & 1 ? .5 : 0), pi = Math.round(px),
+          py1 = py - pj;
+
+      if (Math.abs(py1) * 3 > 1) {
+        var px1 = px - pi,
+            pi2 = pi + (px < pi ? -1 : 1) / 2,
+            pj2 = pj + (py < pj ? -1 : 1),
+            px2 = px - pi2,
+            py2 = py - pj2;
+        if (px1 * px1 + py1 * py1 > px2 * px2 + py2 * py2) pi = pi2 + (pj & 1 ? 1 : -1) / 2, pj = pj2;
+      }
+
+      var id = pi + "-" + pj, bin = binsById[id];
+      if (bin) bin.push(point); else {
+        bin = binsById[id] = [point];
+        bin.i = pi;
+        bin.j = pj;
+        bin.x = (pi + (pj & 1 ? 1 / 2 : 0)) * dx;
+        bin.y = pj * dy;
+      }
+    });
+
+    return d3.values(binsById);
+  }
+
+  function hexagon(radius) {
+    var x0 = 0, y0 = 0;
+    return d3_hexbinAngles.map(function(angle) {
+      var x1 = Math.sin(angle) * radius,
+          y1 = -Math.cos(angle) * radius,
+          dx = x1 - x0,
+          dy = y1 - y0;
+      x0 = x1, y0 = y1;
+      return [dx, dy];
+    });
+  }
+
+  hexbin.x = function(_) {
+    if (!arguments.length) return x;
+    x = _;
+    return hexbin;
+  };
+
+  hexbin.y = function(_) {
+    if (!arguments.length) return y;
+    y = _;
+    return hexbin;
+  };
+
+  hexbin.hexagon = function(radius) {
+    if (arguments.length < 1) radius = r;
+    return "m" + hexagon(radius).join("l") + "z";
+  };
+
+  hexbin.centers = function() {
+    var centers = [];
+    for (var y = 0, odd = false, j = 0; y < height + r; y += dy, odd = !odd, ++j) {
+      for (var x = odd ? dx / 2 : 0, i = 0; x < width + dx / 2; x += dx, ++i) {
+        var center = [x, y];
+        center.i = i;
+        center.j = j;
+        centers.push(center);
+      }
+    }
+    return centers;
+  };
+
+  hexbin.mesh = function() {
+    var fragment = hexagon(r).slice(0, 4).join("l");
+    return hexbin.centers().map(function(p) { return "M" + p + "m" + fragment; }).join("");
+  };
+
+  hexbin.size = function(_) {
+    if (!arguments.length) return [width, height];
+    width = +_[0], height = +_[1];
+    return hexbin;
+  };
+
+  hexbin.radius = function(_) {
+    if (!arguments.length) return r;
+    r = +_;
+    dx = r * 2 * Math.sin(Math.PI / 3);
+    dy = r * 1.5;
+    return hexbin;
+  };
+
+  return hexbin.radius(1);
+};
+
+var d3_hexbinAngles = d3.range(0, 2 * Math.PI, Math.PI / 3),
+    d3_hexbinX = function(d) { return d[0]; },
+    d3_hexbinY = function(d) { return d[1]; };
+
+})();;/*! leaflet-d3.js Version: 0.3.8 */
 (function(){
+	"use strict";
+
+	// L is defined by the Leaflet library, see git://github.com/Leaflet/Leaflet.git for documentation
+	L.HexbinLayer = L.Class.extend({
+		includes: [L.Mixin.Events],
+
+		options : {
+			radius : 10,
+			opacity: 0.5,
+			duration: 200,
+			lng: function(d){
+				return d[0];
+			},
+			lat: function(d){
+				return d[1];
+			},
+			value: function(d){
+				return d.length;
+			},
+			valueFloor: undefined,
+			valueCeil: undefined,
+			colorRange: ['#f7fbff', '#08306b'],
+
+			onmouseover: undefined,
+			onmouseout: undefined,
+			click: undefined
+		},
+
+		initialize : function(options) {
+			L.setOptions(this, options);
+
+			this._hexLayout = d3.hexbin()
+				.radius(this.options.radius)
+				.x(function(d){ return d.point[0]; })
+				.y(function(d){ return d.point[1]; });
+
+			this._data = [];
+			this._colorScale = d3.scale.linear()
+				.range(this.options.colorRange)
+				.clamp(true);
+
+		},
+
+		onAdd : function(map) {
+			this._map = map;
+
+			// Create a container for svg.
+			this._container = this._initContainer();
+
+			// Set up events
+			map.on({'moveend': this._redraw}, this);
+
+			// Initial draw
+			this._redraw();
+		},
+
+		onRemove : function(map) {
+			this._destroyContainer();
+
+			// Remove events
+			map.off({'moveend': this._redraw}, this);
+
+			this._container = null;
+			this._map = null;
+
+			// Explicitly will leave the data array alone in case the layer will be shown again
+			//this._data = [];
+		},
+
+		addTo : function(map) {
+			map.addLayer(this);
+			return this;
+		},
+
+		_initContainer : function() {
+			var container = null;
+
+			// If the container is null or the overlay pane is empty, create the svg element for drawing
+			if (null == this._container) {
+				var overlayPane = this._map.getPanes().overlayPane;
+				container = d3.select(overlayPane).append('svg')
+					.attr('class', 'leaflet-layer leaflet-zoom-hide');
+			}
+
+			return container;
+		},
+
+		_destroyContainer: function(){
+			// Remove the svg element
+			if(null != this._container){
+				this._container.remove();
+			}
+		},
+
+		// (Re)draws the hexbin group
+		_redraw : function(){
+			var that = this;
+
+			if (!that._map) {
+				return;
+			}
+
+			// Generate the mapped version of the data
+			var data = that._data.map(function(d) {
+				var lng = that.options.lng(d);
+				var lat = that.options.lat(d);
+
+				var point = that._project([lng, lat]);
+				return { o: d, point: point };
+			});
+
+			var zoom = this._map.getZoom();
+
+			// Determine the bounds from the data and scale the overlay
+			var padding = this.options.radius * 2;
+			var bounds = this._getBounds(data);
+			var width = (bounds.max[0] - bounds.min[0]) + (2 * padding),
+				height = (bounds.max[1] - bounds.min[1]) + (2 * padding),
+				marginTop = bounds.min[1] - padding,
+				marginLeft = bounds.min[0] - padding;
+
+			this._hexLayout.size([ width, height ]);
+			this._container
+				.attr('width', width).attr('height', height)
+				.style('margin-left', marginLeft + 'px')
+				.style('margin-top', marginTop + 'px');
+
+			// Select the hex group for the current zoom level. This has 
+			// the effect of recreating the group if the zoom level has changed
+			var join = this._container.selectAll('g.hexbin')
+				.data([zoom], function(d){ return d; });
+
+			// enter
+			join.enter().append('g')
+				.attr('class', function(d) { return 'hexbin zoom-' + d; });
+
+			// enter + update
+			join.attr('transform', 'translate(' + -marginLeft + ',' + -marginTop + ')');
+
+			// exit
+			join.exit().remove();
+
+			// add the hexagons to the select
+			this._createHexagons(join, data);
+
+		},
+
+		_createHexagons : function(g, data) {
+			var that = this;
+
+			// Create the bins using the hexbin layout
+			var bins = that._hexLayout(data);
+
+			// Determine the extent of the values
+			var extent = d3.extent(bins, function(d){
+				return that.options.value(d);
+			});
+			if(null == extent[0]) extent[0] = 0;
+			if(null == extent[1]) extent[1] = 0;
+			if(null != that.options.valueFloor) extent[0] = that.options.valueFloor;
+			if(null != that.options.valueCeil) extent[1] = that.options.valueCeil;
+
+			// Match the domain cardinality to that of the color range, to allow for a polylinear scale
+			var domain = that._linearlySpace(extent[0], extent[1], that._colorScale.range().length);
+
+			// Set the colorscale domain
+			that._colorScale.domain(domain);
+
+			// Join - Join the Hexagons to the data
+			var join = g.selectAll('path.hexbin-hexagon')
+				.data(bins, function(d){ return d.i + ':' + d.j; });
+
+			// Update - set the fill and opacity on a transition (opacity is re-applied in case the enter transition was cancelled)
+			join.transition().duration(that.options.duration)
+				.attr('fill', function(d){ return that._colorScale(that.options.value(d)); })
+				.attr('fill-opacity', that.options.opacity)
+				.attr('stroke-opacity', that.options.opacity);
+	
+			// Enter - establish the path, the fill, and the initial opacity
+			join.enter().append('path').attr('class', 'hexbin-hexagon')
+				.attr('d', function(d){ return 'M' + d.x + ',' + d.y + that._hexLayout.hexagon(); })
+				.attr('fill', function(d){ return that._colorScale(that.options.value(d)); })
+				.attr('fill-opacity', 0.01)
+				.attr('stroke-opacity', 0.01)
+				.on('mouseover', function(d, i) {
+					if(null != that.options.onmouseover) {
+						that.options.onmouseover(d, this, that);
+					}
+				})
+				.on('mouseout', function(d, i) {
+					if(null != that.options.onmouseout) {
+						that.options.onmouseout(d, this, that);
+					}
+				})
+				.on('click', function(d, i) {
+					if(null != that.options.onclick) {
+						that.options.onclick(d, this, that);
+					}
+				})
+				.transition().duration(that.options.duration)
+					.attr('fill-opacity', that.options.opacity)
+					.attr('stroke-opacity', that.options.opacity);
+
+			// Exit
+			join.exit().transition().duration(that.options.duration)
+				.attr('fill-opacity', 0.01)
+				.attr('stroke-opacity', 0.01)
+				.remove();
+
+		},
+
+		_project : function(coord) {
+			var point = this._map.latLngToLayerPoint([ coord[1], coord[0] ]);
+			return [ point.x, point.y ];
+		},
+
+		_getBounds: function(data){
+			var that = this;
+
+			if(null == data || data.length < 1){
+				return { min: [0,0], max: [0,0]};
+			}
+
+			// bounds is [[min long, min lat], [max long, max lat]]
+			var bounds = [[999, 999], [-999, -999]];
+
+			data.forEach(function(element){
+				var x = element.point[0];
+				var y = element.point[1];
+
+				bounds[0][0] = Math.min(bounds[0][0], x);
+				bounds[0][1] = Math.min(bounds[0][1], y);
+				bounds[1][0] = Math.max(bounds[1][0], x);
+				bounds[1][1] = Math.max(bounds[1][1], y);
+			});
+
+			return { min: bounds[0], max: bounds[1] };
+		},
+
+		_linearlySpace: function(from, to, length){
+			var arr = new Array(length);
+			var step = (to - from) / Math.max(length - 1, 1);
+
+			for (var i = 0; i < length; ++i) {
+				arr[i] = from + (i * step);
+			}
+
+			return arr;
+		},
+
+		/* 
+		 * Setter for the data
+		 */
+		data : function(data) {
+			this._data = (null != data)? data : [];
+			this._redraw();
+			return this;
+		},
+
+		/*
+		 * Getter/setter for the colorScale
+		 */
+		colorScale: function(colorScale) {
+			if(undefined === colorScale){
+				return this._colorScale;
+			}
+
+			this._colorScale = colorScale;
+			this._redraw();
+			return this;
+		},
+
+		/*
+		 * Getter/Setter for the value function
+		 */
+		value: function(valueFn) {
+			if(undefined === valueFn){
+				return this.options.value;
+			}
+
+			this.options.value = valueFn;
+			this._redraw();
+			return this;
+		},
+
+		/*
+		 * Getter/setter for the mouseover function
+		 */
+		onmouseover: function(mouseoverFn) {
+			this.options.onmouseover = mouseoverFn;
+			this._redraw();
+			return this;
+		},
+
+		/*
+		 * Getter/setter for the mouseout function
+		 */
+		onmouseout: function(mouseoutFn) {
+			this.options.onmouseout = mouseoutFn;
+			this._redraw();
+			return this;
+		},
+
+		/*
+		 * Getter/setter for the click function
+		 */
+		onclick: function(clickFn) {
+			this.options.onclick = clickFn;
+			this._redraw();
+			return this;
+		}
+
+	});
+
+	L.hexbinLayer = function(options) {
+		return new L.HexbinLayer(options);
+	};
+
+})();
+
+(function(){
+	"use strict";
+
+	// L is defined by the Leaflet library, see git://github.com/Leaflet/Leaflet.git for documentation
+	L.PingLayer = L.Class.extend({
+		includes: [L.Mixin.Events],
+
+		/*
+		 * Configuration
+		 */
+		options : {
+			lng: function(d){
+				return d[0];
+			},
+			lat: function(d){
+				return d[1];
+			},
+			fps: 32,
+			duration: 800
+		},
+
+		_lastUpdate: Date.now(),
+		_fps: 0,
+
+		_mapBounds: undefined,
+
+		/*
+		 * Public Methods
+		 */
+
+		/*
+		 * Getter/setter for the radius
+		 */
+		radiusScale: function(radiusScale) {
+			if(undefined === radiusScale){
+				return this._radiusScale;
+			}
+
+			this._radiusScale = radiusScale;
+			return this;
+		},
+
+		/*
+		 * Getter/setter for the opacity
+		 */
+		opacityScale: function(opacityScale) {
+			if(undefined === opacityScale){
+				return this._opacityScale;
+			}
+
+			this._opacityScale = opacityScale;
+			return this;
+		},
+
+		// Initialization of the plugin
+		initialize : function(options) {
+			L.setOptions(this, options);
+
+			this._radiusScale = d3.scale.pow().exponent(0.35)
+				.domain([0, this.options.duration])
+				.range([3, 15])
+				.clamp(true);
+			this._opacityScale = d3.scale.linear()
+				.domain([0, this.options.duration])
+				.range([1, 0])
+				.clamp(true);
+		},
+
+		// Called when the plugin layer is added to the map
+		onAdd : function(map) {
+			this._map = map;
+
+			// Init the state of the simulation
+			this._running = false;
+
+			// Create a container for svg.
+			this._container = this._initContainer();
+			this._updateContainer();
+
+			// Set up events
+			map.on({'move': this._move}, this);
+		},
+
+		// Called when the plugin layer is removed from the map
+		onRemove : function(map) {
+			this._destroyContainer();
+
+			// Remove events
+			map.off({'move': this._move}, this);
+
+			this._container = null;
+			this._map = null;
+			this._data = null;
+		},
+
+		// Add the layer to the map
+		addTo : function(map) {
+			map.addLayer(this);
+			return this;
+		},
+
+		/*
+		 * Method by which to "add" pings
+		 */
+		ping : function(data, cssClass) {
+			this._add(data, cssClass);
+			this._expire();
+
+			// Start timer if not active
+			if(!this._running && this._data.length > 0) {
+				this._running = true;
+				this._lastUpdate = Date.now();
+
+				var that = this;
+				d3.timer(function() { return that._update.apply(that); });
+			}
+
+			return this;
+		},
+
+		getFps : function() {
+			return this._fps;
+		},
+
+		getCount : function() {
+			return this._data.length;
+		},
+
+		/*
+		 * Private Methods
+		 */
+
+		// Initialize the Container - creates the svg pane
+		_initContainer : function() {
+			var container = null;
+
+			// If the container is null or the overlay pane is empty, create the svg element for drawing
+			if (null == this._container) {
+				var overlayPane = this._map.getPanes().overlayPane;
+				container = d3.select(overlayPane).append('svg')
+					.attr('class', 'leaflet-layer leaflet-zoom-hide');
+			}
+
+			return container;
+		},
+
+		// Update the container - Updates the dimensions of the svg pane
+		_updateContainer : function() {
+			var bounds = this._getMapBounds();
+			this._mapBounds = bounds;
+
+			this._container
+				.attr('width', bounds.width).attr('height', bounds.height)
+				.style('margin-left', bounds.left + 'px')
+				.style('margin-top', bounds.top + 'px');
+		},
+
+		// Cleanup the svg pane
+		_destroyContainer: function() {
+			// Remove the svg element
+			if(null != this._container){
+				this._container.remove();
+			}
+		},
+
+		// Calculate the current map bounds
+		_getMapBounds: function(){
+			var latLongBounds = this._map.getBounds();
+			var ne = this._map.latLngToLayerPoint(latLongBounds.getNorthEast());
+			var sw = this._map.latLngToLayerPoint(latLongBounds.getSouthWest());
+
+			var bounds = {
+				width: ne.x - sw.x,
+				height: sw.y - ne.y,
+				left: sw.x,
+				top: ne.y
+			};
+
+			return bounds;
+		},
+
+		// Update the map based on zoom/pan/move
+		_move: function() {
+			this._updateContainer();
+		},
+
+		// Add a ping to the map
+		_add : function(data, cssClass) {
+			// Lazy init the data array
+			if(null == this._data) this._data = [];
+
+			// Derive the spatial data
+			var geo = [this.options.lat(data), this.options.lng(data)];
+			var point = this._map.latLngToLayerPoint(geo);
+			var mapBounds = this._mapBounds;
+
+			// Add the data to the list of pings
+			var circle = {
+				geo: geo,
+				x: point.x - mapBounds.left, y: point.y - mapBounds.top,
+				ts: Date.now(),
+				nts: 0
+			};
+			circle.c = this._container.append('circle')
+				.attr('class', (null != cssClass)? 'ping ' + cssClass : 'ping')
+				.attr('cx', circle.x)
+				.attr('cy', circle.y)
+				.attr('r', this.radiusScale().range()[0]);
+
+			// Push new circles
+			this._data.push(circle);
+		},
+
+		// Main update loop
+		_update : function() {
+			var nowTs = Date.now();
+			if(null == this._data) this._data = [];
+
+			var maxIndex = -1;
+
+			// Update everything
+			for(var i=0; i < this._data.length; i++) {
+				var d = this._data[i];
+				var age = nowTs - d.ts;
+
+				if(this.options.duration < age){
+					// If the blip is beyond it's life, remove it from the dom and track the lowest index to remove
+					d.c.remove();
+					maxIndex = i;
+				} else {
+
+					// If the blip is still alive, process it
+					if(d.nts < nowTs) {
+						d.c.attr('r', this.radiusScale()(age))
+						   .attr('fill-opacity', this.opacityScale()(age))
+						   .attr('stroke-opacity', this.opacityScale()(age));
+						d.nts = Math.round(nowTs + 1000/this.options.fps);
+					}
+				}
+			}
+
+			// Delete all the aged off data at once
+			if(maxIndex > -1) {
+				this._data.splice(0, maxIndex + 1);
+			}
+
+			// The return function dictates whether the timer loop will continue
+			this._running = (this._data.length > 0);
+
+			if(this._running) {
+				this._fps = 1000/(nowTs - this._lastUpdate);
+				this._lastUpdate = nowTs;
+			}
+
+			return !this._running;
+		},
+
+		// Expire old pings
+		_expire : function() {
+			var maxIndex = -1;
+			var nowTs = Date.now();
+
+			// Search from the front of the array
+			for(var i=0; i < this._data.length; i++) {
+				var d = this._data[i];
+				var age = nowTs - d.ts;
+
+				if(this.options.duration < age) {
+					// If the blip is beyond it's life, remove it from the dom and track the lowest index to remove
+					d.c.remove();
+					maxIndex = i;
+				} else {
+					break;
+				}
+			}
+
+			// Delete all the aged off data at once
+			if(maxIndex > -1) {
+				this._data.splice(0, maxIndex + 1);
+			}
+		}
+
+	});
+
+	L.pingLayer = function(options) {
+		return new L.PingLayer(options);
+	};
+
+})();;(function(){
   $(window).scroll(function () {
       var top = $(document).scrollTop();
       $('.splash').css({
@@ -1552,723 +2271,736 @@ HeatmapOverlay.CSS_TRANSFORM = (function() {
 	L.tileLayer.provider = function (provider, options) {
 		return new L.TileLayer.Provider(provider, options);
 	};
-}());;(function() {
+}());;/*
+	Leaflet.label, a plugin that adds labels to markers and vectors for Leaflet powered maps.
+	(c) 2012-2013, Jacob Toye, Smartrak
+	https://github.com/Leaflet/Leaflet.label
+	http://leafletjs.com
+	https://github.com/jacobtoye
+*/
+(function (window, document, undefined) {
+var L = window.L;/*
+ * Leaflet.label assumes that you have already included the Leaflet library.
+ */
 
-d3.hexbin = function() {
-  var width = 1,
-      height = 1,
-      r,
-      x = d3_hexbinX,
-      y = d3_hexbinY,
-      dx,
-      dy;
+L.labelVersion = '0.2.2-dev';
 
-  function hexbin(points) {
-    var binsById = {};
+L.Label = (L.Layer ? L.Layer : L.Class).extend({
 
-    points.forEach(function(point, i) {
-      var py = y.call(hexbin, point, i) / dy, pj = Math.round(py),
-          px = x.call(hexbin, point, i) / dx - (pj & 1 ? .5 : 0), pi = Math.round(px),
-          py1 = py - pj;
+	includes: L.Mixin.Events,
 
-      if (Math.abs(py1) * 3 > 1) {
-        var px1 = px - pi,
-            pi2 = pi + (px < pi ? -1 : 1) / 2,
-            pj2 = pj + (py < pj ? -1 : 1),
-            px2 = px - pi2,
-            py2 = py - pj2;
-        if (px1 * px1 + py1 * py1 > px2 * px2 + py2 * py2) pi = pi2 + (pj & 1 ? 1 : -1) / 2, pj = pj2;
-      }
+	options: {
+		className: '',
+		clickable: false,
+		direction: 'right',
+		noHide: false,
+		offset: [12, -15], // 6 (width of the label triangle) + 6 (padding)
+		opacity: 1,
+		zoomAnimation: true
+	},
 
-      var id = pi + "-" + pj, bin = binsById[id];
-      if (bin) bin.push(point); else {
-        bin = binsById[id] = [point];
-        bin.i = pi;
-        bin.j = pj;
-        bin.x = (pi + (pj & 1 ? 1 / 2 : 0)) * dx;
-        bin.y = pj * dy;
-      }
-    });
+	initialize: function (options, source) {
+		L.setOptions(this, options);
 
-    return d3.values(binsById);
-  }
+		this._source = source;
+		this._animated = L.Browser.any3d && this.options.zoomAnimation;
+		this._isOpen = false;
+	},
 
-  function hexagon(radius) {
-    var x0 = 0, y0 = 0;
-    return d3_hexbinAngles.map(function(angle) {
-      var x1 = Math.sin(angle) * radius,
-          y1 = -Math.cos(angle) * radius,
-          dx = x1 - x0,
-          dy = y1 - y0;
-      x0 = x1, y0 = y1;
-      return [dx, dy];
-    });
-  }
+	onAdd: function (map) {
+		this._map = map;
 
-  hexbin.x = function(_) {
-    if (!arguments.length) return x;
-    x = _;
-    return hexbin;
-  };
+		this._pane = this.options.pane ? map._panes[this.options.pane] :
+			this._source instanceof L.Marker ? map._panes.markerPane : map._panes.popupPane;
 
-  hexbin.y = function(_) {
-    if (!arguments.length) return y;
-    y = _;
-    return hexbin;
-  };
+		if (!this._container) {
+			this._initLayout();
+		}
 
-  hexbin.hexagon = function(radius) {
-    if (arguments.length < 1) radius = r;
-    return "m" + hexagon(radius).join("l") + "z";
-  };
+		this._pane.appendChild(this._container);
 
-  hexbin.centers = function() {
-    var centers = [];
-    for (var y = 0, odd = false, j = 0; y < height + r; y += dy, odd = !odd, ++j) {
-      for (var x = odd ? dx / 2 : 0, i = 0; x < width + dx / 2; x += dx, ++i) {
-        var center = [x, y];
-        center.i = i;
-        center.j = j;
-        centers.push(center);
-      }
-    }
-    return centers;
-  };
+		this._initInteraction();
 
-  hexbin.mesh = function() {
-    var fragment = hexagon(r).slice(0, 4).join("l");
-    return hexbin.centers().map(function(p) { return "M" + p + "m" + fragment; }).join("");
-  };
+		this._update();
 
-  hexbin.size = function(_) {
-    if (!arguments.length) return [width, height];
-    width = +_[0], height = +_[1];
-    return hexbin;
-  };
+		this.setOpacity(this.options.opacity);
 
-  hexbin.radius = function(_) {
-    if (!arguments.length) return r;
-    r = +_;
-    dx = r * 2 * Math.sin(Math.PI / 3);
-    dy = r * 1.5;
-    return hexbin;
-  };
+		map
+			.on('moveend', this._onMoveEnd, this)
+			.on('viewreset', this._onViewReset, this);
 
-  return hexbin.radius(1);
+		if (this._animated) {
+			map.on('zoomanim', this._zoomAnimation, this);
+		}
+
+		if (L.Browser.touch && !this.options.noHide) {
+			L.DomEvent.on(this._container, 'click', this.close, this);
+			map.on('click', this.close, this);
+		}
+	},
+
+	onRemove: function (map) {
+		this._pane.removeChild(this._container);
+
+		map.off({
+			zoomanim: this._zoomAnimation,
+			moveend: this._onMoveEnd,
+			viewreset: this._onViewReset
+		}, this);
+
+		this._removeInteraction();
+
+		this._map = null;
+	},
+
+	setLatLng: function (latlng) {
+		this._latlng = L.latLng(latlng);
+		if (this._map) {
+			this._updatePosition();
+		}
+		return this;
+	},
+
+	setContent: function (content) {
+		// Backup previous content and store new content
+		this._previousContent = this._content;
+		this._content = content;
+
+		this._updateContent();
+
+		return this;
+	},
+
+	close: function () {
+		var map = this._map;
+
+		if (map) {
+			if (L.Browser.touch && !this.options.noHide) {
+				L.DomEvent.off(this._container, 'click', this.close);
+				map.off('click', this.close, this);
+			}
+
+			map.removeLayer(this);
+		}
+	},
+
+	updateZIndex: function (zIndex) {
+		this._zIndex = zIndex;
+
+		if (this._container && this._zIndex) {
+			this._container.style.zIndex = zIndex;
+		}
+	},
+
+	setOpacity: function (opacity) {
+		this.options.opacity = opacity;
+
+		if (this._container) {
+			L.DomUtil.setOpacity(this._container, opacity);
+		}
+	},
+
+	_initLayout: function () {
+		this._container = L.DomUtil.create('div', 'leaflet-label ' + this.options.className + ' leaflet-zoom-animated');
+		this.updateZIndex(this._zIndex);
+	},
+
+	_update: function () {
+		if (!this._map) { return; }
+
+		this._container.style.visibility = 'hidden';
+
+		this._updateContent();
+		this._updatePosition();
+
+		this._container.style.visibility = '';
+	},
+
+	_updateContent: function () {
+		if (!this._content || !this._map || this._prevContent === this._content) {
+			return;
+		}
+
+		if (typeof this._content === 'string') {
+			this._container.innerHTML = this._content;
+
+			this._prevContent = this._content;
+
+			this._labelWidth = this._container.offsetWidth;
+		}
+	},
+
+	_updatePosition: function () {
+		var pos = this._map.latLngToLayerPoint(this._latlng);
+
+		this._setPosition(pos);
+	},
+
+	_setPosition: function (pos) {
+		var map = this._map,
+			container = this._container,
+			centerPoint = map.latLngToContainerPoint(map.getCenter()),
+			labelPoint = map.layerPointToContainerPoint(pos),
+			direction = this.options.direction,
+			labelWidth = this._labelWidth,
+			offset = L.point(this.options.offset);
+
+		// position to the right (right or auto & needs to)
+		if (direction === 'right' || direction === 'auto' && labelPoint.x < centerPoint.x) {
+			L.DomUtil.addClass(container, 'leaflet-label-right');
+			L.DomUtil.removeClass(container, 'leaflet-label-left');
+
+			pos = pos.add(offset);
+		} else { // position to the left
+			L.DomUtil.addClass(container, 'leaflet-label-left');
+			L.DomUtil.removeClass(container, 'leaflet-label-right');
+
+			pos = pos.add(L.point(-offset.x - labelWidth, offset.y));
+		}
+
+		L.DomUtil.setPosition(container, pos);
+	},
+
+	_zoomAnimation: function (opt) {
+		var pos = this._map._latLngToNewLayerPoint(this._latlng, opt.zoom, opt.center).round();
+
+		this._setPosition(pos);
+	},
+
+	_onMoveEnd: function () {
+		if (!this._animated || this.options.direction === 'auto') {
+			this._updatePosition();
+		}
+	},
+
+	_onViewReset: function (e) {
+		/* if map resets hard, we must update the label */
+		if (e && e.hard) {
+			this._update();
+		}
+	},
+
+	_initInteraction: function () {
+		if (!this.options.clickable) { return; }
+
+		var container = this._container,
+			events = ['dblclick', 'mousedown', 'mouseover', 'mouseout', 'contextmenu'];
+
+		L.DomUtil.addClass(container, 'leaflet-clickable');
+		L.DomEvent.on(container, 'click', this._onMouseClick, this);
+
+		for (var i = 0; i < events.length; i++) {
+			L.DomEvent.on(container, events[i], this._fireMouseEvent, this);
+		}
+	},
+
+	_removeInteraction: function () {
+		if (!this.options.clickable) { return; }
+
+		var container = this._container,
+			events = ['dblclick', 'mousedown', 'mouseover', 'mouseout', 'contextmenu'];
+
+		L.DomUtil.removeClass(container, 'leaflet-clickable');
+		L.DomEvent.off(container, 'click', this._onMouseClick, this);
+
+		for (var i = 0; i < events.length; i++) {
+			L.DomEvent.off(container, events[i], this._fireMouseEvent, this);
+		}
+	},
+
+	_onMouseClick: function (e) {
+		if (this.hasEventListeners(e.type)) {
+			L.DomEvent.stopPropagation(e);
+		}
+
+		this.fire(e.type, {
+			originalEvent: e
+		});
+	},
+
+	_fireMouseEvent: function (e) {
+		this.fire(e.type, {
+			originalEvent: e
+		});
+
+		// TODO proper custom event propagation
+		// this line will always be called if marker is in a FeatureGroup
+		if (e.type === 'contextmenu' && this.hasEventListeners(e.type)) {
+			L.DomEvent.preventDefault(e);
+		}
+		if (e.type !== 'mousedown') {
+			L.DomEvent.stopPropagation(e);
+		} else {
+			L.DomEvent.preventDefault(e);
+		}
+	}
+});
+
+
+// This object is a mixin for L.Marker and L.CircleMarker. We declare it here as both need to include the contents.
+L.BaseMarkerMethods = {
+	showLabel: function () {
+		if (this.label && this._map) {
+			this.label.setLatLng(this._latlng);
+			this._map.showLabel(this.label);
+		}
+
+		return this;
+	},
+
+	hideLabel: function () {
+		if (this.label) {
+			this.label.close();
+		}
+		return this;
+	},
+
+	setLabelNoHide: function (noHide) {
+		if (this._labelNoHide === noHide) {
+			return;
+		}
+
+		this._labelNoHide = noHide;
+
+		if (noHide) {
+			this._removeLabelRevealHandlers();
+			this.showLabel();
+		} else {
+			this._addLabelRevealHandlers();
+			this.hideLabel();
+		}
+	},
+
+	bindLabel: function (content, options) {
+		var labelAnchor = this.options.icon ? this.options.icon.options.labelAnchor : this.options.labelAnchor,
+			anchor = L.point(labelAnchor) || L.point(0, 0);
+
+		anchor = anchor.add(L.Label.prototype.options.offset);
+
+		if (options && options.offset) {
+			anchor = anchor.add(options.offset);
+		}
+
+		options = L.Util.extend({offset: anchor}, options);
+
+		this._labelNoHide = options.noHide;
+
+		if (!this.label) {
+			if (!this._labelNoHide) {
+				this._addLabelRevealHandlers();
+			}
+
+			this
+				.on('remove', this.hideLabel, this)
+				.on('move', this._moveLabel, this)
+				.on('add', this._onMarkerAdd, this);
+
+			this._hasLabelHandlers = true;
+		}
+
+		this.label = new L.Label(options, this)
+			.setContent(content);
+
+		return this;
+	},
+
+	unbindLabel: function () {
+		if (this.label) {
+			this.hideLabel();
+
+			this.label = null;
+
+			if (this._hasLabelHandlers) {
+				if (!this._labelNoHide) {
+					this._removeLabelRevealHandlers();
+				}
+
+				this
+					.off('remove', this.hideLabel, this)
+					.off('move', this._moveLabel, this)
+					.off('add', this._onMarkerAdd, this);
+			}
+
+			this._hasLabelHandlers = false;
+		}
+		return this;
+	},
+
+	updateLabelContent: function (content) {
+		if (this.label) {
+			this.label.setContent(content);
+		}
+	},
+
+	getLabel: function () {
+		return this.label;
+	},
+
+	_onMarkerAdd: function () {
+		if (this._labelNoHide) {
+			this.showLabel();
+		}
+	},
+
+	_addLabelRevealHandlers: function () {
+		this
+			.on('mouseover', this.showLabel, this)
+			.on('mouseout', this.hideLabel, this);
+
+		if (L.Browser.touch) {
+			this.on('click', this.showLabel, this);
+		}
+	},
+
+	_removeLabelRevealHandlers: function () {
+		this
+			.off('mouseover', this.showLabel, this)
+			.off('mouseout', this.hideLabel, this);
+
+		if (L.Browser.touch) {
+			this.off('click', this.showLabel, this);
+		}
+	},
+
+	_moveLabel: function (e) {
+		this.label.setLatLng(e.latlng);
+	}
 };
 
-var d3_hexbinAngles = d3.range(0, 2 * Math.PI, Math.PI / 3),
-    d3_hexbinX = function(d) { return d[0]; },
-    d3_hexbinY = function(d) { return d[1]; };
+// Add in an option to icon that is used to set where the label anchor is
+L.Icon.Default.mergeOptions({
+	labelAnchor: new L.Point(9, -20)
+});
 
-})();;/*! leaflet-d3.js Version: 0.3.8 */
-(function(){
-	"use strict";
+// Have to do this since Leaflet is loaded before this plugin and initializes
+// L.Marker.options.icon therefore missing our mixin above.
+L.Marker.mergeOptions({
+	icon: new L.Icon.Default()
+});
 
-	// L is defined by the Leaflet library, see git://github.com/Leaflet/Leaflet.git for documentation
-	L.HexbinLayer = L.Class.extend({
-		includes: [L.Mixin.Events],
+L.Marker.include(L.BaseMarkerMethods);
+L.Marker.include({
+	_originalUpdateZIndex: L.Marker.prototype._updateZIndex,
 
-		options : {
-			radius : 10,
-			opacity: 0.5,
-			duration: 200,
-			lng: function(d){
-				return d[0];
-			},
-			lat: function(d){
-				return d[1];
-			},
-			value: function(d){
-				return d.length;
-			},
-			valueFloor: undefined,
-			valueCeil: undefined,
-			colorRange: ['#f7fbff', '#08306b'],
+	_updateZIndex: function (offset) {
+		var zIndex = this._zIndex + offset;
 
-			onmouseover: undefined,
-			onmouseout: undefined,
-			click: undefined
-		},
+		this._originalUpdateZIndex(offset);
 
-		initialize : function(options) {
-			L.setOptions(this, options);
+		if (this.label) {
+			this.label.updateZIndex(zIndex);
+		}
+	},
 
-			this._hexLayout = d3.hexbin()
-				.radius(this.options.radius)
-				.x(function(d){ return d.point[0]; })
-				.y(function(d){ return d.point[1]; });
+	_originalSetOpacity: L.Marker.prototype.setOpacity,
 
-			this._data = [];
-			this._colorScale = d3.scale.linear()
-				.range(this.options.colorRange)
-				.clamp(true);
+	setOpacity: function (opacity, labelHasSemiTransparency) {
+		this.options.labelHasSemiTransparency = labelHasSemiTransparency;
 
-		},
+		this._originalSetOpacity(opacity);
+	},
 
-		onAdd : function(map) {
-			this._map = map;
+	_originalUpdateOpacity: L.Marker.prototype._updateOpacity,
 
-			// Create a container for svg.
-			this._container = this._initContainer();
+	_updateOpacity: function () {
+		var absoluteOpacity = this.options.opacity === 0 ? 0 : 1;
 
-			// Set up events
-			map.on({'moveend': this._redraw}, this);
+		this._originalUpdateOpacity();
 
-			// Initial draw
-			this._redraw();
-		},
+		if (this.label) {
+			this.label.setOpacity(this.options.labelHasSemiTransparency ? this.options.opacity : absoluteOpacity);
+		}
+	},
 
-		onRemove : function(map) {
-			this._destroyContainer();
+	_originalSetLatLng: L.Marker.prototype.setLatLng,
 
-			// Remove events
-			map.off({'moveend': this._redraw}, this);
+	setLatLng: function (latlng) {
+		if (this.label && !this._labelNoHide) {
+			this.hideLabel();
+		}
 
-			this._container = null;
-			this._map = null;
+		return this._originalSetLatLng(latlng);
+	}
+});
 
-			// Explicitly will leave the data array alone in case the layer will be shown again
-			//this._data = [];
-		},
+// Add in an option to icon that is used to set where the label anchor is
+L.CircleMarker.mergeOptions({
+	labelAnchor: new L.Point(0, 0)
+});
 
-		addTo : function(map) {
-			map.addLayer(this);
-			return this;
-		},
 
-		_initContainer : function() {
-			var container = null;
+L.CircleMarker.include(L.BaseMarkerMethods);
 
-			// If the container is null or the overlay pane is empty, create the svg element for drawing
-			if (null == this._container) {
-				var overlayPane = this._map.getPanes().overlayPane;
-				container = d3.select(overlayPane).append('svg')
-					.attr('class', 'leaflet-layer leaflet-zoom-hide');
+L.Path.include({
+	bindLabel: function (content, options) {
+		if (!this.label || this.label.options !== options) {
+			this.label = new L.Label(options, this);
+		}
+
+		this.label.setContent(content);
+
+		if (!this._showLabelAdded) {
+			this
+				.on('mouseover', this._showLabel, this)
+				.on('mousemove', this._moveLabel, this)
+				.on('mouseout remove', this._hideLabel, this);
+
+			if (L.Browser.touch) {
+				this.on('click', this._showLabel, this);
 			}
+			this._showLabelAdded = true;
+		}
 
-			return container;
-		},
+		return this;
+	},
 
-		_destroyContainer: function(){
-			// Remove the svg element
-			if(null != this._container){
-				this._container.remove();
-			}
-		},
+	unbindLabel: function () {
+		if (this.label) {
+			this._hideLabel();
+			this.label = null;
+			this._showLabelAdded = false;
+			this
+				.off('mouseover', this._showLabel, this)
+				.off('mousemove', this._moveLabel, this)
+				.off('mouseout remove', this._hideLabel, this);
+		}
+		return this;
+	},
 
-		// (Re)draws the hexbin group
-		_redraw : function(){
-			var that = this;
+	updateLabelContent: function (content) {
+		if (this.label) {
+			this.label.setContent(content);
+		}
+	},
 
-			if (!that._map) {
-				return;
-			}
+	_showLabel: function (e) {
+		this.label.setLatLng(e.latlng);
+		this._map.showLabel(this.label);
+	},
 
-			// Generate the mapped version of the data
-			var data = that._data.map(function(d) {
-				var lng = that.options.lng(d);
-				var lat = that.options.lat(d);
+	_moveLabel: function (e) {
+		this.label.setLatLng(e.latlng);
+	},
 
-				var point = that._project([lng, lat]);
-				return { o: d, point: point };
-			});
+	_hideLabel: function () {
+		this.label.close();
+	}
+});
 
-			var zoom = this._map.getZoom();
+L.Map.include({
+	showLabel: function (label) {
+		return this.addLayer(label);
+	}
+});
 
-			// Determine the bounds from the data and scale the overlay
-			var padding = this.options.radius * 2;
-			var bounds = this._getBounds(data);
-			var width = (bounds.max[0] - bounds.min[0]) + (2 * padding),
-				height = (bounds.max[1] - bounds.min[1]) + (2 * padding),
-				marginTop = bounds.min[1] - padding,
-				marginLeft = bounds.min[0] - padding;
+L.FeatureGroup.include({
+	// TODO: remove this when AOP is supported in Leaflet, need this as we cannot put code in removeLayer()
+	clearLayers: function () {
+		this.unbindLabel();
+		this.eachLayer(this.removeLayer, this);
+		return this;
+	},
 
-			this._hexLayout.size([ width, height ]);
-			this._container
-				.attr('width', width).attr('height', height)
-				.style('margin-left', marginLeft + 'px')
-				.style('margin-top', marginTop + 'px');
+	bindLabel: function (content, options) {
+		return this.invoke('bindLabel', content, options);
+	},
 
-			// Select the hex group for the current zoom level. This has 
-			// the effect of recreating the group if the zoom level has changed
-			var join = this._container.selectAll('g.hexbin')
-				.data([zoom], function(d){ return d; });
+	unbindLabel: function () {
+		return this.invoke('unbindLabel');
+	},
 
-			// enter
-			join.enter().append('g')
-				.attr('class', function(d) { return 'hexbin zoom-' + d; });
+	updateLabelContent: function (content) {
+		this.invoke('updateLabelContent', content);
+	}
+});
 
-			// enter + update
-			join.attr('transform', 'translate(' + -marginLeft + ',' + -marginTop + ')');
-
-			// exit
-			join.exit().remove();
-
-			// add the hexagons to the select
-			this._createHexagons(join, data);
-
-		},
-
-		_createHexagons : function(g, data) {
-			var that = this;
-
-			// Create the bins using the hexbin layout
-			var bins = that._hexLayout(data);
-
-			// Determine the extent of the values
-			var extent = d3.extent(bins, function(d){
-				return that.options.value(d);
-			});
-			if(null == extent[0]) extent[0] = 0;
-			if(null == extent[1]) extent[1] = 0;
-			if(null != that.options.valueFloor) extent[0] = that.options.valueFloor;
-			if(null != that.options.valueCeil) extent[1] = that.options.valueCeil;
-
-			// Match the domain cardinality to that of the color range, to allow for a polylinear scale
-			var domain = that._linearlySpace(extent[0], extent[1], that._colorScale.range().length);
-
-			// Set the colorscale domain
-			that._colorScale.domain(domain);
-
-			// Join - Join the Hexagons to the data
-			var join = g.selectAll('path.hexbin-hexagon')
-				.data(bins, function(d){ return d.i + ':' + d.j; });
-
-			// Update - set the fill and opacity on a transition (opacity is re-applied in case the enter transition was cancelled)
-			join.transition().duration(that.options.duration)
-				.attr('fill', function(d){ return that._colorScale(that.options.value(d)); })
-				.attr('fill-opacity', that.options.opacity)
-				.attr('stroke-opacity', that.options.opacity);
+}(window, document));;L.Icon.Label = L.Icon.extend({
+	options: {
+		/*
+		labelAnchor: (Point) (top left position of the label within the wrapper, default is right)
+		wrapperAnchor: (Point) (position of icon and label relative to Lat/Lng)
+		iconAnchor: (Point) (top left position of icon within wrapper)
+		labelText: (String) (label's text component, if this is null the element will not be created)
+		*/
+		/* Icon options:
+		iconUrl: (String) (required)
+		iconSize: (Point) (can be set through CSS)
+		iconAnchor: (Point) (centered by default if size is specified, can be set in CSS with negative margins)
+		popupAnchor: (Point) (if not specified, popup opens in the anchor point)
+		shadowUrl: (Point) (no shadow by default)
+		shadowSize: (Point)
+		*/
+		labelClassName: ''
+	},
 	
-			// Enter - establish the path, the fill, and the initial opacity
-			join.enter().append('path').attr('class', 'hexbin-hexagon')
-				.attr('d', function(d){ return 'M' + d.x + ',' + d.y + that._hexLayout.hexagon(); })
-				.attr('fill', function(d){ return that._colorScale(that.options.value(d)); })
-				.attr('fill-opacity', 0.01)
-				.attr('stroke-opacity', 0.01)
-				.on('mouseover', function(d, i) {
-					if(null != that.options.onmouseover) {
-						that.options.onmouseover(d, this, that);
-					}
-				})
-				.on('mouseout', function(d, i) {
-					if(null != that.options.onmouseout) {
-						that.options.onmouseout(d, this, that);
-					}
-				})
-				.on('click', function(d, i) {
-					if(null != that.options.onclick) {
-						that.options.onclick(d, this, that);
-					}
-				})
-				.transition().duration(that.options.duration)
-					.attr('fill-opacity', that.options.opacity)
-					.attr('stroke-opacity', that.options.opacity);
+	initialize: function (options) {
+		L.Util.setOptions(this, options);
+		L.Icon.prototype.initialize.call(this, this.options);
+	},
 
-			// Exit
-			join.exit().transition().duration(that.options.duration)
-				.attr('fill-opacity', 0.01)
-				.attr('stroke-opacity', 0.01)
-				.remove();
+	setLabelAsHidden: function () {
+		this._labelHidden = true;
+	},
 
-		},
+	createIcon: function () {
+		return this._createLabel(L.Icon.prototype.createIcon.call(this));
+	},
+	
+	createShadow: function () {
+		if (!this.options.shadowUrl) {
+			return null;
+		}
+		var shadow = L.Icon.prototype.createShadow.call(this);
+		//need to reposition the shadow
+		if (shadow) {
+			shadow.style.marginLeft = (-this.options.wrapperAnchor.x) + 'px';
+			shadow.style.marginTop = (-this.options.wrapperAnchor.y) + 'px';
+		}
+		return shadow;
+	},
 
-		_project : function(coord) {
-			var point = this._map.latLngToLayerPoint([ coord[1], coord[0] ]);
-			return [ point.x, point.y ];
-		},
+	updateLabel: function (icon, text) {
+		if (icon.nodeName.toUpperCase() === 'DIV') {
+			icon.childNodes[1].innerHTML = text;
+			
+			this.options.labelText = text;
+		}
+	},
 
-		_getBounds: function(data){
-			var that = this;
-
-			if(null == data || data.length < 1){
-				return { min: [0,0], max: [0,0]};
-			}
-
-			// bounds is [[min long, min lat], [max long, max lat]]
-			var bounds = [[999, 999], [-999, -999]];
-
-			data.forEach(function(element){
-				var x = element.point[0];
-				var y = element.point[1];
-
-				bounds[0][0] = Math.min(bounds[0][0], x);
-				bounds[0][1] = Math.min(bounds[0][1], y);
-				bounds[1][0] = Math.max(bounds[1][0], x);
-				bounds[1][1] = Math.max(bounds[1][1], y);
-			});
-
-			return { min: bounds[0], max: bounds[1] };
-		},
-
-		_linearlySpace: function(from, to, length){
-			var arr = new Array(length);
-			var step = (to - from) / Math.max(length - 1, 1);
-
-			for (var i = 0; i < length; ++i) {
-				arr[i] = from + (i * step);
-			}
-
-			return arr;
-		},
-
-		/* 
-		 * Setter for the data
-		 */
-		data : function(data) {
-			this._data = (null != data)? data : [];
-			this._redraw();
-			return this;
-		},
-
-		/*
-		 * Getter/setter for the colorScale
-		 */
-		colorScale: function(colorScale) {
-			if(undefined === colorScale){
-				return this._colorScale;
-			}
-
-			this._colorScale = colorScale;
-			this._redraw();
-			return this;
-		},
-
-		/*
-		 * Getter/Setter for the value function
-		 */
-		value: function(valueFn) {
-			if(undefined === valueFn){
-				return this.options.value;
-			}
-
-			this.options.value = valueFn;
-			this._redraw();
-			return this;
-		},
-
-		/*
-		 * Getter/setter for the mouseover function
-		 */
-		onmouseover: function(mouseoverFn) {
-			this.options.onmouseover = mouseoverFn;
-			this._redraw();
-			return this;
-		},
-
-		/*
-		 * Getter/setter for the mouseout function
-		 */
-		onmouseout: function(mouseoutFn) {
-			this.options.onmouseout = mouseoutFn;
-			this._redraw();
-			return this;
-		},
-
-		/*
-		 * Getter/setter for the click function
-		 */
-		onclick: function(clickFn) {
-			this.options.onclick = clickFn;
-			this._redraw();
-			return this;
+	showLabel: function (icon) {
+		if (!this._labelTextIsSet()) {
+			return;
 		}
 
-	});
+		icon.childNodes[1].style.display = 'block';
+	},
 
-	L.hexbinLayer = function(options) {
-		return new L.HexbinLayer(options);
-	};
-
-})();
-
-(function(){
-	"use strict";
-
-	// L is defined by the Leaflet library, see git://github.com/Leaflet/Leaflet.git for documentation
-	L.PingLayer = L.Class.extend({
-		includes: [L.Mixin.Events],
-
-		/*
-		 * Configuration
-		 */
-		options : {
-			lng: function(d){
-				return d[0];
-			},
-			lat: function(d){
-				return d[1];
-			},
-			fps: 32,
-			duration: 800
-		},
-
-		_lastUpdate: Date.now(),
-		_fps: 0,
-
-		_mapBounds: undefined,
-
-		/*
-		 * Public Methods
-		 */
-
-		/*
-		 * Getter/setter for the radius
-		 */
-		radiusScale: function(radiusScale) {
-			if(undefined === radiusScale){
-				return this._radiusScale;
-			}
-
-			this._radiusScale = radiusScale;
-			return this;
-		},
-
-		/*
-		 * Getter/setter for the opacity
-		 */
-		opacityScale: function(opacityScale) {
-			if(undefined === opacityScale){
-				return this._opacityScale;
-			}
-
-			this._opacityScale = opacityScale;
-			return this;
-		},
-
-		// Initialization of the plugin
-		initialize : function(options) {
-			L.setOptions(this, options);
-
-			this._radiusScale = d3.scale.pow().exponent(0.35)
-				.domain([0, this.options.duration])
-				.range([3, 15])
-				.clamp(true);
-			this._opacityScale = d3.scale.linear()
-				.domain([0, this.options.duration])
-				.range([1, 0])
-				.clamp(true);
-		},
-
-		// Called when the plugin layer is added to the map
-		onAdd : function(map) {
-			this._map = map;
-
-			// Init the state of the simulation
-			this._running = false;
-
-			// Create a container for svg.
-			this._container = this._initContainer();
-			this._updateContainer();
-
-			// Set up events
-			map.on({'move': this._move}, this);
-		},
-
-		// Called when the plugin layer is removed from the map
-		onRemove : function(map) {
-			this._destroyContainer();
-
-			// Remove events
-			map.off({'move': this._move}, this);
-
-			this._container = null;
-			this._map = null;
-			this._data = null;
-		},
-
-		// Add the layer to the map
-		addTo : function(map) {
-			map.addLayer(this);
-			return this;
-		},
-
-		/*
-		 * Method by which to "add" pings
-		 */
-		ping : function(data, cssClass) {
-			this._add(data, cssClass);
-			this._expire();
-
-			// Start timer if not active
-			if(!this._running && this._data.length > 0) {
-				this._running = true;
-				this._lastUpdate = Date.now();
-
-				var that = this;
-				d3.timer(function() { return that._update.apply(that); });
-			}
-
-			return this;
-		},
-
-		getFps : function() {
-			return this._fps;
-		},
-
-		getCount : function() {
-			return this._data.length;
-		},
-
-		/*
-		 * Private Methods
-		 */
-
-		// Initialize the Container - creates the svg pane
-		_initContainer : function() {
-			var container = null;
-
-			// If the container is null or the overlay pane is empty, create the svg element for drawing
-			if (null == this._container) {
-				var overlayPane = this._map.getPanes().overlayPane;
-				container = d3.select(overlayPane).append('svg')
-					.attr('class', 'leaflet-layer leaflet-zoom-hide');
-			}
-
-			return container;
-		},
-
-		// Update the container - Updates the dimensions of the svg pane
-		_updateContainer : function() {
-			var bounds = this._getMapBounds();
-			this._mapBounds = bounds;
-
-			this._container
-				.attr('width', bounds.width).attr('height', bounds.height)
-				.style('margin-left', bounds.left + 'px')
-				.style('margin-top', bounds.top + 'px');
-		},
-
-		// Cleanup the svg pane
-		_destroyContainer: function() {
-			// Remove the svg element
-			if(null != this._container){
-				this._container.remove();
-			}
-		},
-
-		// Calculate the current map bounds
-		_getMapBounds: function(){
-			var latLongBounds = this._map.getBounds();
-			var ne = this._map.latLngToLayerPoint(latLongBounds.getNorthEast());
-			var sw = this._map.latLngToLayerPoint(latLongBounds.getSouthWest());
-
-			var bounds = {
-				width: ne.x - sw.x,
-				height: sw.y - ne.y,
-				left: sw.x,
-				top: ne.y
-			};
-
-			return bounds;
-		},
-
-		// Update the map based on zoom/pan/move
-		_move: function() {
-			this._updateContainer();
-		},
-
-		// Add a ping to the map
-		_add : function(data, cssClass) {
-			// Lazy init the data array
-			if(null == this._data) this._data = [];
-
-			// Derive the spatial data
-			var geo = [this.options.lat(data), this.options.lng(data)];
-			var point = this._map.latLngToLayerPoint(geo);
-			var mapBounds = this._mapBounds;
-
-			// Add the data to the list of pings
-			var circle = {
-				geo: geo,
-				x: point.x - mapBounds.left, y: point.y - mapBounds.top,
-				ts: Date.now(),
-				nts: 0
-			};
-			circle.c = this._container.append('circle')
-				.attr('class', (null != cssClass)? 'ping ' + cssClass : 'ping')
-				.attr('cx', circle.x)
-				.attr('cy', circle.y)
-				.attr('r', this.radiusScale().range()[0]);
-
-			// Push new circles
-			this._data.push(circle);
-		},
-
-		// Main update loop
-		_update : function() {
-			var nowTs = Date.now();
-			if(null == this._data) this._data = [];
-
-			var maxIndex = -1;
-
-			// Update everything
-			for(var i=0; i < this._data.length; i++) {
-				var d = this._data[i];
-				var age = nowTs - d.ts;
-
-				if(this.options.duration < age){
-					// If the blip is beyond it's life, remove it from the dom and track the lowest index to remove
-					d.c.remove();
-					maxIndex = i;
-				} else {
-
-					// If the blip is still alive, process it
-					if(d.nts < nowTs) {
-						d.c.attr('r', this.radiusScale()(age))
-						   .attr('fill-opacity', this.opacityScale()(age))
-						   .attr('stroke-opacity', this.opacityScale()(age));
-						d.nts = Math.round(nowTs + 1000/this.options.fps);
-					}
-				}
-			}
-
-			// Delete all the aged off data at once
-			if(maxIndex > -1) {
-				this._data.splice(0, maxIndex + 1);
-			}
-
-			// The return function dictates whether the timer loop will continue
-			this._running = (this._data.length > 0);
-
-			if(this._running) {
-				this._fps = 1000/(nowTs - this._lastUpdate);
-				this._lastUpdate = nowTs;
-			}
-
-			return !this._running;
-		},
-
-		// Expire old pings
-		_expire : function() {
-			var maxIndex = -1;
-			var nowTs = Date.now();
-
-			// Search from the front of the array
-			for(var i=0; i < this._data.length; i++) {
-				var d = this._data[i];
-				var age = nowTs - d.ts;
-
-				if(this.options.duration < age) {
-					// If the blip is beyond it's life, remove it from the dom and track the lowest index to remove
-					d.c.remove();
-					maxIndex = i;
-				} else {
-					break;
-				}
-			}
-
-			// Delete all the aged off data at once
-			if(maxIndex > -1) {
-				this._data.splice(0, maxIndex + 1);
-			}
+	hideLabel: function (icon) {
+		if (!this._labelTextIsSet()) {
+			return;
 		}
 
-	});
+		icon.childNodes[1].style.display = 'none';
+	},
 
-	L.pingLayer = function(options) {
-		return new L.PingLayer(options);
-	};
+	_createLabel: function (img) {
+		if (!this._labelTextIsSet()) {
+			return img;
+		}
 
-})();
+		var wrapper = document.createElement('div'),
+			label = document.createElement('span');
+
+		// set up wrapper anchor
+		wrapper.style.marginLeft = (-this.options.wrapperAnchor.x) + 'px';
+		wrapper.style.marginTop = (-this.options.wrapperAnchor.y) + 'px';
+
+		wrapper.className = 'leaflet-marker-icon-wrapper leaflet-zoom-animated';
+
+		// set up label
+		label.className = 'leaflet-marker-iconlabel ' + this.options.labelClassName;
+
+		label.innerHTML = this.options.labelText;
+
+		label.style.marginLeft = this.options.labelAnchor.x + 'px';
+		label.style.marginTop = this.options.labelAnchor.y + 'px';
+
+		if (this._labelHidden) {
+			label.style.display = 'none';
+			// Ensure that the pointer cursor shows
+			img.style.cursor = 'pointer';
+		}
+		
+		//reset icons margins (as super makes them -ve)
+		img.style.marginLeft = this.options.iconAnchor.x + 'px';
+		img.style.marginTop = this.options.iconAnchor.y + 'px';
+		
+		wrapper.appendChild(img);
+		wrapper.appendChild(label);
+
+		return wrapper;
+	},
+	
+	_labelTextIsSet: function () {
+		return typeof this.options.labelText !== 'undefined' && this.options.labelText !== null;
+	}
+});
+
+L.Icon.Label.Default = L.Icon.Label.extend({
+	options: {
+		//This is the top left position of the label within the wrapper. By default it will display at the right
+		//middle position of the default icon. x = width of icon + padding
+		//If the icon height is greater than the label height you will need to set the y value.
+		//y = (icon height - label height) / 2
+		labelAnchor: new L.Point(29, 8),
+		
+		//This is the position of the wrapper div. Use this to position icon + label relative to the Lat/Lng.
+		//By default the point of the default icon is anchor
+		wrapperAnchor: new L.Point(13, 41),
+		
+		//This is now the top left position of the icon within the wrapper.
+		//If the label height is greater than the icon you will need to set the y value.
+		//y = (label height - icon height) / 2
+		iconAnchor: new L.Point(0, 0),
+		
+		//label's text component, if this is null the element will not be created
+		labelText: null,
+		
+		/* From L.Icon.Default */
+		iconUrl: L.Icon.Default.imagePath + '/marker-icon.png',
+		iconSize: new L.Point(25, 41),
+		popupAnchor: new L.Point(0, -33),
+
+		shadowUrl: L.Icon.Default.imagePath + '/marker-shadow.png',
+		shadowSize: new L.Point(41, 41)
+	}
+});
+
+L.Marker.Label = L.Marker.extend({
+	updateLabel: function (text) {
+		this.options.icon.updateLabel(this._icon, text);
+	},
+
+	_initIcon: function () {
+		if (!(this.options.icon instanceof L.Icon.Label)) {
+			throw new Error('Icon must be an instance of L.Icon.Label.');
+		}
+
+		// Ensure that the label is hidden to begin with
+		if (this.options.revealing) {
+			this.options.icon.setLabelAsHidden();
+		}
+
+		L.Marker.prototype._initIcon.call(this);
+	},
+
+	_removeIcon: function () {
+		if (this.options.revealing) {
+			L.DomEvent
+				.off(this._icon, 'mouseover', this._showLabel)
+				.off(this._icon, 'mouseout', this._hideLabel);
+		}
+
+		L.Marker.prototype._removeIcon.call(this);
+	},
+
+	_initInteraction: function () {
+		L.Marker.prototype._initInteraction.call(this);
+
+		if (!this.options.revealing) {
+			return;
+		}
+
+		L.DomEvent
+			.on(this._icon, 'mouseover', this._showLabel, this)
+			.on(this._icon, 'mouseout', this._hideLabel, this);
+	},
+
+	_showLabel: function () {
+		this.options.icon.showLabel(this._icon);
+	},
+
+	_hideLabel: function () {
+		this.options.icon.hideLabel(this._icon);
+	}
+});

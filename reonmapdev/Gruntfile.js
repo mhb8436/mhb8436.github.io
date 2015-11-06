@@ -8,16 +8,17 @@ module.exports = function(grunt) {
         },
         dist: {
           src:[
-            'bower_components/d3-plugins/hexbin/hexbin.js', 
-            'bower_components/leaflet.markercluster/dist/leaflet.markercluster-src.js',
-            'bower_components/leaflet-d3/dist/leaflet-d3.js',
-            'bower_components/jquery.maskedinput/dist/jquery.maskedinput.js',
+            'vendor/js/hexbin.js', 
+            'vendor/js/leaflet.markercluster-src.js',
+            'vendor/js/leaflet-d3.js',
+            'vendor/js/jquery.maskedinput.js',
             'vendor/js/bootswatch.js',
             'vendor/js/heatmap.js',
             'vendor/js/leaflet-heatmap.js',
             'vendor/js/leaflet-provider.js',
             'vendor/js/hexbin.js',
-            'vendor/js/leaflet-d3.js',
+            'vendor/js/leaflet.label-src.js',
+            'vendor/js/leaflet.iconlabel.js',
             // 'js/controllers.js',
             // 'js/directives.js',
             // 'js/services.js',
@@ -45,6 +46,7 @@ module.exports = function(grunt) {
             'vendor/css/bootstrap.min.css',
             'bower_components/leaflet.markercluster/dist/MarkerCluster.css',
             'vendor/css/clusterpies.css',
+            'vendor/css/leaflet.iconlabel.css',
           ]
         }
       }

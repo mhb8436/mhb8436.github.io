@@ -4,7 +4,8 @@ angular.module('deitel.services',[])
 .factory('$burl', function($q, $http, $window, $base){
 	return {
 		get: function(url){
-			return '/api/v1.0' + url;
+			// return '/' + url;
+			return url;
 		}
 	}
 })
@@ -132,16 +133,16 @@ angular.module('deitel.services',[])
 
 .factory('$sampleservice', function($q, $http, $window, $base, $burl){
 	var obj = Object.create($base);
- 	obj.set($burl.get('/sample'));
+ 	obj.set($burl.get('/data'));
 	console.log('after creation $groupservice url is ' + obj.getUrl());
 
-	obj.getPlmnid = function(q, suffix){
+	obj.listMainMap = function(q, suffix){
 		var method = 'GET';
 		var that = this;
 		var deferred = $q.defer();
-		console.log('ap_group suffix is ' + suffix);
-		var url = $burl.get('/group') + '/plmnid' + (_.isUndefined(suffix)?'':suffix);
-		console.log('$baseService url is ' + url);
+		// console.log('ap_group suffix is ' + suffix);
+		var url = $burl.get('/data') + '/jj01.json';
+		// console.log('$baseService url is ' + url);
 
 		that.query(q, url, method, function(q, data){
 			console.log(that.keyPrefix + ' get success ');
