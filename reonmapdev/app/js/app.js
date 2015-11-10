@@ -1,16 +1,11 @@
+
 angular.module('deitel', ['ngRoute','ngSanitize','deitel.directives', 'deitel.services','deitel.controllers'])
+
 .config(['$routeProvider', '$locationProvider','$httpProvider', function($routeProvider, $locationProvider,$httpProvider) {
 
 	$routeProvider
-		.when('/sample', {
-			controller: 'SampleCtrl' ,
-			templateUrl: '/views/sample.html'
-		})
+
 		.when('/s01', {
-			controller: 'SampleCtrl' ,
-			templateUrl: '/views/sample.html'
-		})
-		.when('/s02', {
 			controller: 'SampleCtrl' ,
 			templateUrl: '/views/sample.html'
 		})

@@ -120,7 +120,7 @@ angular.module('deitel.controllers', ['nvd3'])
         stacked: false,
         duration: 500,
         xAxis: {
-          axisLabel: '년월일',
+          axisLabel: '기간',
           tickFormat: function(d) {
             return d3.time.format('%Y%m%d')(new Date(d));
           },
@@ -186,6 +186,9 @@ angular.module('deitel.controllers', ['nvd3'])
 					$scope.api.update();
 					$scope.api.refresh();
 					console.log('updated... but not..');
+					$('html, body').animate({
+			        scrollTop: $("#chartss").offset().top
+			    }, 500);
 				},500);		
 		}
 

@@ -16,14 +16,17 @@ module.exports = function(grunt) {
             'vendor/js/heatmap.js',
             'vendor/js/leaflet-heatmap.js',
             'vendor/js/leaflet-provider.js',
-            'vendor/js/hexbin.js',
             'vendor/js/leaflet.label-src.js',
-            'vendor/js/leaflet.iconlabel.js',         
-            'vendor/js/angular-nvd3.js',   
-            // 'js/controllers.js',
-            // 'js/directives.js',
-            // 'js/services.js',
-            // 'js/app.js',
+            'vendor/js/leaflet.iconlabel.js',
+            'vendor/js/angular-nvd3.js',  
+            'vendor/js/proj4-compressed.js',  
+            'vendor/js/proj4leaflet.js',  
+            'vendor/js/Leaflet.KoreanTmsProviders.js',
+            'app/js/controllers.js',
+            'app/js/services.js',
+            'app/js/directives.js',
+            'app/js/app.js',
+
           ],
           dest:'bin/lib_<%= pkg.name %>.js'
         }   
@@ -82,7 +85,7 @@ module.exports = function(grunt) {
     watch: {
       express: {
         files:  [ '**/*.js' ],
-        tasks:  [ 'express:dev' ],
+        tasks:  [ 'concat','cssjoin', 'cssmin','uglify', 'express:dev'],
         options: {
           spawn: false // for grunt-contrib-watch v0.5.0+, "nospawn: true" for lower versions. Without this option specified express won't be reloaded 
         }
@@ -95,7 +98,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-cssmin');
   grunt.loadNpmTasks('grunt-express-server');
-  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-watch');  
   grunt.loadNpmTasks('grunt-cssjoin');
 
   grunt.registerTask('default', ['concat','cssjoin', 'cssmin','uglify', 'express:dev', 'watch']);

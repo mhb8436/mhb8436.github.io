@@ -1,6 +1,5 @@
 angular.module('deitel.services',[])
 
-
 .factory('$burl', function($q, $http, $window, $base){
 	return {
 		get: function(url){
@@ -8,7 +7,7 @@ angular.module('deitel.services',[])
 			return url;
 		}
 	}
-})
+}) 
 
 .factory('$base', function($q, $http, $window){
 
