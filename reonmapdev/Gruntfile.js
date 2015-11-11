@@ -22,6 +22,9 @@ module.exports = function(grunt) {
             'vendor/js/proj4-compressed.js',  
             'vendor/js/proj4leaflet.js',  
             'vendor/js/Leaflet.KoreanTmsProviders.js',
+            'vendor/js/classie.js',
+            'vendor/js/cbpAnimatedHeader.min.js',
+            'vendor/js/jqBootstrapValidation.js',
             'app/js/controllers.js',
             'app/js/services.js',
             'app/js/directives.js',
@@ -50,6 +53,7 @@ module.exports = function(grunt) {
             'vendor/css/bootstrap.min.css',
             'bower_components/leaflet.markercluster/dist/MarkerCluster.css',
             'vendor/css/clusterpies.css',
+            'vendor/css/one.css',
             'vendor/css/leaflet.iconlabel.css',
           ]
         }

@@ -9,6 +9,10 @@ angular.module('deitel', ['ngRoute','ngSanitize','deitel.directives', 'deitel.se
 			controller: 'SampleCtrl' ,
 			templateUrl: '/views/sample.html'
 		})
+		.when('/s02', {
+			controller: 'OneCtrl' ,
+			templateUrl: '/views/one.html'
+		})
 
 		// .otherwise({
 		// 	redirectTo: '/sample'
