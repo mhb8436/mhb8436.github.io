@@ -23,8 +23,8 @@ module.exports = function(grunt) {
             'vendor/js/proj4leaflet.js',  
             'vendor/js/Leaflet.KoreanTmsProviders.js',
             'vendor/js/classie.js',
-            'vendor/js/cbpAnimatedHeader.min.js',
             'vendor/js/jqBootstrapValidation.js',
+            // 'vendor/js/leaflet.markercluster-src.js',
             'app/js/controllers.js',
             'app/js/services.js',
             'app/js/directives.js',
@@ -50,8 +50,8 @@ module.exports = function(grunt) {
       path_option:{
         files:{
           'bin/lib_<%= pkg.name %>.css': [
-            'vendor/css/bootstrap.min.css',
-            'bower_components/leaflet.markercluster/dist/MarkerCluster.css',
+            // 'vendor/css/MarkerCluster.Default.css',            
+            // 'vendor/css/MarkerCluster.css',            
             'vendor/css/clusterpies.css',
             'vendor/css/one.css',
             'vendor/css/leaflet.iconlabel.css',

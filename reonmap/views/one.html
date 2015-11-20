@@ -9,7 +9,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand page-scroll" href="#page-top">부동산은 성적순이(아니)자나요</a>
+                <a class="navbar-brand page-scroll" href="#page-top">아파트 실거래가 지도</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -19,7 +19,7 @@
                         <a href="#page-top"></a>
                     </li>
                     <li>
-                        <a class="page-scroll" href="#guide">지도보는법</a>
+                        <a class="page-scroll" href="#guide">사용법</a>
                     </li>
                     <li>
                         <a class="page-scroll" href="#filter">조건선택</a>
@@ -312,40 +312,5 @@ $('body').scrollspy({
 $('.navbar-collapse ul li a').click(function() {
     $('.navbar-toggle:visible').click();
 });
-
-var cbpAnimatedHeader = (function() {
-
-    var docElem = document.documentElement,
-        header = document.querySelector( '.navbar-default' ),
-        didScroll = false,
-        changeHeaderOn = 300;
-
-    function init() {
-        window.addEventListener( 'scroll', function( event ) {
-            if( !didScroll ) {
-                didScroll = true;
-                setTimeout( scrollPage, 250 );
-            }
-        }, false );
-    }
-
-    function scrollPage() {
-        var sy = scrollY();
-        if ( sy >= changeHeaderOn ) {
-            classie.add( header, 'navbar-shrink' );
-        }
-        else {
-            classie.remove( header, 'navbar-shrink' );
-        }
-        didScroll = false;
-    }
-
-    function scrollY() {
-        return window.pageYOffset || docElem.scrollTop;
-    }
-
-    init();
-
-})();
 
 </script>

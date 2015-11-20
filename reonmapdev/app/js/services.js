@@ -155,6 +155,27 @@ angular.module('deitel.services',[])
 		return deferred.promise;
 	};
 
+	obj.listSchoolMap = function(q, suffix){
+		var method = 'GET';
+		var that = this;
+		var deferred = $q.defer();
+		// console.log('ap_group suffix is ' + suffix);
+		var url = $burl.get('/data') + '/jj04.json';
+		// console.log('$baseService url is ' + url);
+
+		that.query(q, url, method, function(q, data){
+			console.log(that.keyPrefix + ' get success ');
+			console.log(data);
+			console.log('--------------------------');
+			deferred.resolve(data);
+		}, function(q){
+			console.log(that.keyPrefix + ' get failure error q is ' + q);
+		});
+
+		return deferred.promise;
+	};
+
+
 	return obj;
 });
 
