@@ -1,9 +1,9 @@
 [{
-	"name": "Interesting Things",
-	"skeyword": "interesting"
-}, {
 	"name": "Top",
 	"skeyword": "all"
+}, {
+	"name": "Interesting Things",
+	"skeyword": "interesting"
 }, {
 	"name": "Animal",
 	"skeyword": "animal"
