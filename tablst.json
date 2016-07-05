@@ -1,8 +1,5 @@
 [{
-	"name": "Top",
-	"skeyword": "all"
-}, {
-	"name": "Interesting",
+	"name": "Interest",
 	"skeyword": "interesting"
 }, {
 	"name": "Animal",
@@ -10,4 +7,13 @@
 }, {
 	"name": "Car",
 	"skeyword": "car"
+}, {
+	"name": "Cook",
+	"skeyword": "cooking"
+}, {
+	"name": "New Tech",
+	"skeyword": "newtech"
+}, {
+	"name": "Fishing",
+	"skeyword": "fishing"
 }]
