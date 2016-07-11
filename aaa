@@ -1,0 +1,63 @@
+https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.playlists.list?part=contentDetails&id=PLb-jOMAYGHhhGeTvgpxD7BEFBMpfyqyZX&key=AIzaSyD4piUt8jbx4nq03NsKt8dFZTMbx9aqQ74
+
+
+https://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyD4piUt8jbx4nq03NsKt8dFZTMbx9aqQ74&fields=items(id,snippet(channelId,title,categoryId),statistics)&part=snippet,statistics
+
+
+https://developers.google.com/apis-explorer/#p/youtube/v3/youtube.playlists.list?part=contentDetails&id=PLOU2XLYxmsIIM9h1Ybw2DuRw6o2fkNMeR,PLyYlLs02rgBYRWBzYpoHz7m2SE8mEZ68w&key=AIzaSyD4piUt8jbx4nq03NsKt8dFZTMbx9aqQ74
+
+https://www.googleapis.com/youtube/v3/playlists?part=contentDetails&id=PLb-jOMAYGHhhGeTvgpxD7BEFBMpfyqyZX&key=AIzaSyD4piUt8jbx4nq03NsKt8dFZTMbx9aqQ74
+
+
+https://www.googleapis.com/youtube/v3/playlistItems?part=snippet%2CcontentDetails%2Cstatus&playlistId=PLb-jOMAYGHhhGeTvgpxD7BEFBMpfyqyZX&key=AIzaSyD4piUt8jbx4nq03NsKt8dFZTMbx9aqQ74
+
+
+{
+   "kind": "youtube#playlistItem",
+   "etag": "\"5g01s4-wS2b4VpScndqCYc5Y-8k/N6dcKLuecRDpcFZ4aa6hOixEi5Y\"",
+   "id": "UExiLWpPTUFZR0hoaEdlVHZncHhEN0JFRkJNcGZ5cXlaWC4wOTA3OTZBNzVEMTUzOTMy",
+   "snippet": {
+    "publishedAt": "2016-06-27T00:30:14.000Z",
+    "channelId": "UCvyd2Jm1p0d4ukfHJVYZg9g",
+    "title": "fishing",
+    "description": "",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/CwI8ISVeHJY/default.jpg",
+      "width": 120,
+      "height": 90
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/CwI8ISVeHJY/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/CwI8ISVeHJY/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     }
+    },
+    "channelTitle": "Meong Mi",
+    "playlistId": "PLb-jOMAYGHhhGeTvgpxD7BEFBMpfyqyZX",
+    "position": 4,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "CwI8ISVeHJY"
+    }
+   },
+   "contentDetails": {
+    "videoId": "CwI8ISVeHJY",
+    "startAt": "PT0S",
+    "endAt": "PT0S"
+   },
+   "status": {
+    "privacyStatus": "public"
+   }
+  }
+
+
+  http://r2---sn-ixaav8pnpvo-pjol.googlevideo.com/videoplayback?source=youtube&mv=m&mime=video%2F3gpp&ms=au&dur=72.817&initcwndbps=2728750&id=o-AOvYImpxLyEy-nuPeEmFFd0DbVav3xgpqpY6pStiiFQD&pl=21&itag=17&mm=31&ip=119.149.147.120&mn=sn-ixaav8pnpvo-pjol&fexp=9414702%2C9416126%2C9416891%2C9419451%2C9422596%2C9424417%2C9428398%2C9431012%2C9433096%2C9433380%2C9433508%2C9433946%2C9435526%2C9435876%2C9436048%2C9436835%2C9437066%2C9437403%2C9437552%2C9438291%2C9439328%2C9439441%2C9439534%2C9439610%2C9439652%2C9440496%2C9440637&ipbits=0&key=yt6&mt=1467449536&sparams=dur%2Cid%2Cinitcwndbps%2Cip%2Cipbits%2Citag%2Clmt%2Cmime%2Cmm%2Cmn%2Cms%2Cmv%2Cpl%2Csource%2Cupn%2Cexpire&sver=3&expire=1467471503&upn=nmre-Cmth8I&lmt=1466987974854905
+
+
+http://r2---sn-ixaav8pnpvo-pjol.googlevideo.com/videoplayback?ipbits=0&sparams=dur,id,initcwndbps,ip,ipbits,itag,lmt,mime,mm,mn,ms,mv,pcm2cms,pl,source,upn,expire&lmt=1466987976111963&mime=video/3gpp&expire=1467471579&source=youtube&key=yt6&dur=72.817&itag=36&pl=21&ip=119.149.147.120&mm=31&mn=sn-ixaav8pnpvo-pjol&sver=3&id=o-ACO2mE2vColz3aUfRKnbRu2imIN9AUHSGz1Pm1VF6ZFl&fexp=9414702,9416126,9416891,9419451,9422596,9424417,9428398,9431012,9433096,9433380,9433508,9433946,9435526,9435876,9436048,9436835,9437066,9437403,9437552,9438291,9439328,9439441,9439534,9439610,9439652,9440496,9440637&mv=m&pcm2cms=yes&ms=au&mt=1467449536&initcwndbps=2728750&upn=YG8OBT7CbaA&signature=36
